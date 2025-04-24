@@ -109,7 +109,7 @@ window.showLargeImage = function(imageSrc, itemName, description, totalBids, cur
 
     // Set the first image and add error handling
     modalImage.onerror = function() {
-        this.src = 'AuctionDefault.png'; // Add a fallback image
+        this.src = './images/AuctionDefault.png'; // Update fallback image path
     };
     modalImage.src = currentImages[0];
     modalItemName.textContent = itemName;
@@ -615,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             onclick="showLargeImage('${image1}', '${sanitizedName}', '${sanitizedDesc}', 
                             ${item.totBids || 0}, ${item.highestBid || item.startingBid}, ${item.startingBid}, ${item.biddingActive}, 
                             '${image2}', '${image3}', '${item.id}')"
-                            onerror="this.src='/AuctionDefault.png'">
+                            onerror="this.src='./images/AuctionDefault.png'">
                         <p>${sanitizedDesc}</p>
                         ${startingBidDisplay}
                         ${currentBidDisplay}
@@ -1536,7 +1536,7 @@ function displayAuctionItems(items) {
             <img src="${primaryImage}" 
                  alt="${escapeHtml(item.name)}" 
                  class="thumbnail" 
-                 onerror="this.src='placeholder-image-url.jpg'"
+                 onerror="this.src='./images/AuctionDefault.png'"
                  onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
             <h3>${escapeHtml(item.name)}</h3>
             <p>Current Bid: $${item.highestBid || item.startingBid}</p>
