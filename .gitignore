@@ -5,6 +5,8 @@ firebase-config.js
 gScript.js
 Code.gs
 DevTasks
+restream-chat.js
+restream-config.js
 
 # But track the templates
 !config.template.js
