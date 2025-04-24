@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://*.firebaseio.com https://script.google.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.gstatic.com https://*.firebaseio.com 'unsafe-inline'; connect-src 'self' wss://*.firebaseio.com https://*.firebaseio.com https://script.google.com https://script.googleusercontent.com">
+    <title>AGLOW Silent Auction</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js" type="module"></script>
+    <script src="config.js" type="module"></script>
+    <script src="chat.js" type="module"></script>
+    <script src="script.js" type="module" defer></script>
+</head>
+<body>
+    <div id="loading-spinner" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    <header>
+        <h1>AGLOW Silent Auction</h1>
+        <p id="welcome-message" style="display: none;"></p>
+        <div class="admin-badge" id="admin-badge" style="display: none; color: gold;">
+            <button id="add-item-button" class="add-item-button" onclick="openAddItemModal()">Add Auction Item</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="login">
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="full-width">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                
+                <div class="full-width">
+                    <label for="login-password">Password:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                
+                <button type="submit">Login</button>
+            </form>
+            <p id="login-error" style="color: red; display: none;"></p>
+            <p class="form-footer">Don't have an account? <a href="#" id="show-registration">Create one here</a></p>
+        </section>
+
+        <section id="registration">
+            <h2>Create Account</h2>
+            <form id="registration-form">
+                <div>
+                    <label for="reg-firstName">First Name:</label>
+                    <input type="text" id="reg-firstName" required>
+                </div>
+                
+                <div>
+                    <label for="reg-lastName">Last Name:</label>
+                    <input type="text" id="reg-lastName" required>
+                </div>
+                
+                <div class="full-width">
+                    <label for="reg-email">Email:</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                
+                <div class="full-width">
+                    <label for="reg-password">Password:</label>
+                    <input type="password" id="reg-password" required>
+                </div>
+                
+                <button type="submit">Register</button>
+            </form>
+        </section>
+
+        <section id="bidding">
+            <h2>Bidding Section</h2>
+            <!-- Bidding content goes here -->
+        </section>
+
+        <section id="auction-items">
+            <h2>Available Auction Items</h2>
+            <div id="auction-items-container"></div>
+        </section>
+
+        <section id="chat">
+            <h2 id="chat-title">Chat</h2>
+            
+            <!-- Admin session buttons -->
+            <div id="admin-sessions" class="admin-only">
+                <div class="session-buttons">
+                    <!-- Session buttons will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Add typing indicator -->
+            <div id="typing-indicator" class="typing-indicator" style="display: none;">
+                <span class="typing-user"></span> is typing...
+            </div>
+
+            <!-- Chat messages for all users -->
+            <div id="chat-messages"></div>
+
+            <div id="chat-input-area">
+                <textarea id="chat-input" placeholder="Select a user to start chatting..." disabled></textarea>
+                <button id="send-message" disabled>Send</button>
+            </div>
+            
+            <button id="load-all-history">Load All History</button>
+
+            <!-- Move search panel here, below chat -->
+            <div id="admin-tools" class="admin-only" style="display: none;">
+                <div id="search-panel" class="tool-panel">
+                    <h3>Item Search</h3>
+                    <div class="search-container">
+                        <input type="text" 
+                               id="item-search" 
+                               placeholder="Search items..." 
+                               oninput="handleItemSearch()">
+                        <div id="search-results"></div>
+                    </div>
+                </div>
+
+                <div id="rss-panel" class="tool-panel">
+                    <h3>RSS Feed Management</h3>
+                    <button id="generate-rss-token">Generate New RSS Token</button>
+                    <div id="rss-token-display"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal for displaying larger image -->
+        <div id="image-modal" class="modal" style="display: none;">
+            <div class="modal-container">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div class="modal-image-container">
+                    <button class="carousel-button prev" onclick="changeImage(-1)">❮</button>
+                    <img class="modal-content" id="modal-image">
+                    <button class="carousel-button next" onclick="changeImage(1)">❯</button>
+                </div>
+                <div class="modal-info">
+                    <h3 id="modal-item-name"></h3>
+                    <div id="modal-bid-info"></div>
+                    <p id="modal-description"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AGLOW Silent Auction</p>
+    </footer>
+
+    <!-- Add the modal structure (place near the end of body, before closing main tag) -->
+    <div id="add-item-modal" class="modal" style="display: none;">
+        <div class="modal-container">
+            <span class="close" onclick="closeAddItemModal()">&times;</span>
+            <h2>Add Auction Item</h2>
+            <form id="itemForm">
+                <div class="form-grid">
+                    <!-- Left Column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="itemName">Item Name:</label>
+                            <input type="text" id="itemName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemDescription">Description:</label>
+                            <textarea id="itemDescription" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemCategory">Category:</label>
+                            <input type="text" id="itemCategory" required>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="startingBid">Starting Bid:</label>
+                            <input type="number" id="startingBid" min="0" step="0.01" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="image-input-group">
+                                <label for="itemImage1">Primary Image URL:</label>
+                                <input type="url" 
+                                       id="itemImage1" 
+                                       oninput="updateImagePreview(1)" 
+                                       placeholder="Enter image URL">
+                                <div class="image-preview-container">
+                                    <img id="imagePreview1" src="" alt="Primary Image Preview">
+                                </div>
+                            </div>
+                            
+                            <div class="image-input-group">
+                                <label for="itemImage2">Additional Image URL:</label>
+                                <input type="url" 
+                                       id="itemImage2" 
+                                       oninput="updateImagePreview(2)" 
+                                       placeholder="Enter image URL">
+                                <div class="image-preview-container">
+                                    <img id="imagePreview2" src="" alt="Second Image Preview">
+                                </div>
+                            </div>
+                            
+                            <div class="image-input-group">
+                                <label for="itemImage3">Additional Image URL:</label>
+                                <input type="url" 
+                                       id="itemImage3" 
+                                       oninput="updateImagePreview(3)" 
+                                       placeholder="Enter image URL">
+                                <div class="image-preview-container">
+                                    <img id="imagePreview3" src="" alt="Third Image Preview">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-button">Add Item</button>
+                    <button type="button" class="cancel-button" onclick="closeAddItemModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add this before the closing body tag -->
+    <div id="bid-modal" class="modal" style="display: none;">
+        <div class="modal-container">
+            <span class="close" onclick="closeBidModal()">&times;</span>
+            <h2>Place Bid</h2>
+            <div class="bid-form">
+                <p id="bid-item-name"></p>
+                <p id="current-bid-info"></p>
+                <p id="minimum-bid-info"></p>
+                <div class="form-fields">
+                    <label for="bid-amount">Your Bid Amount ($):</label>
+                    <input type="number" id="bid-amount" min="0" step="0.01" required>
+                </div>
+                <div class="form-actions">
+                    <button onclick="submitBid()" class="submit-button">Place Bid</button>
+                    <button onclick="closeBidModal()" class="cancel-button">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
