@@ -12,27 +12,46 @@ jobs:
       - uses: actions/checkout@v2
       
       # Create config files
-      - name: Create config files
+      - name: Create firebase config
         run: |
-          # Create firebase config
-          cat > firebase-config.js << 'EOL'
-          ${{ secrets.FIREBASE_CONFIG }}
-          EOL
+          cat > firebase-config.js << 'EOF'
+          // Initialize Firebase with your config
+          const firebaseConfig = {
+              apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+              authDomain: "${{ secrets.FIREBASE_AUTH_DOMAIN }}",
+              databaseURL: "${{ secrets.FIREBASE_DATABASE_URL }}",
+              projectId: "${{ secrets.FIREBASE_PROJECT_ID }}",
+              storageBucket: "${{ secrets.FIREBASE_STORAGE_BUCKET }}",
+              messagingSenderId: "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}",
+              appId: "${{ secrets.FIREBASE_APP_ID }}"
+          };
+          firebase.initializeApp(firebaseConfig);
+          const database = firebase.database();
+          export { database };
+          EOF
           
-          # Create app config
-          cat > config.js << 'EOL'
-          ${{ secrets.APP_CONFIG }}
-          EOL
-          
-          # Verify files
-          echo "Created files:"
-          ls -la *.js
-          
+          # Verify file was created
+          echo "Firebase config created:"
+          ls -l firebase-config.js
+
+      - name: Create app config
+        run: |
+          cat > config.js << 'EOF'
+          export const config = {
+              scriptURL: "${{ secrets.SCRIPT_URL }}",
+              githubPages: {
+                  baseUrl: "https://sadjei78.github.io/agl-auc25",
+                  environment: "production"
+              }
+          };
+          EOF
+
       # Deploy to GitHub Pages
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+
 
 
