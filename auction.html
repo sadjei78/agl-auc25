@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://*.firebaseio.com https://script.google.com; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.gstatic.com https://*.firebaseio.com 'unsafe-inline'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://*.firebaseio.com https://script.google.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.gstatic.com https://*.firebaseio.com 'unsafe-inline'; connect-src 'self' wss://*.firebaseio.com https://*.firebaseio.com https://script.google.com https://script.googleusercontent.com">
     <title>AGLOW Silent Auction</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -150,7 +150,7 @@
     </footer>
 
     <!-- Add the modal structure (place near the end of body, before closing main tag) -->
-    <div id="add-item-modal" class="modal">
+    <div id="add-item-modal" class="modal" style="display: none;">
         <div class="modal-container">
             <span class="close" onclick="closeAddItemModal()">&times;</span>
             <h2>Add Auction Item</h2>
