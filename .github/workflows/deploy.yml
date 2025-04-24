@@ -30,9 +30,9 @@ jobs:
           export { database };
           EOF
           
-          # Verify file was created
           echo "Firebase config created:"
           ls -l firebase-config.js
+          cat firebase-config.js
 
       - name: Create app config
         run: |
@@ -45,6 +45,15 @@ jobs:
               }
           };
           EOF
+          
+          echo "App config created:"
+          ls -l config.js
+          cat config.js
+
+      - name: List all files before deploy
+        run: |
+          echo "Files to be deployed:"
+          ls -la
 
       # Deploy to GitHub Pages
       - name: Deploy
