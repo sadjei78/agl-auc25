@@ -1,0 +1,24 @@
+# Configuration and sensitive files
+config.js
+firebase-config.js
+.env
+gScript.js
+Code.gs
+DevTasks
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/

@@ -1,0 +1,1389 @@
+:root {
+    --primary-color: #4CAF50;
+    --secondary-color: #dc3545;
+    --background-color: #f8f8f8;
+    --text-color: #333;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+}
+
+header {
+    background-color: var(--background-color);
+    padding: 20px;
+    text-align: center;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.auction-item {
+    border: 1px solid #ccc;
+    padding: 15px;
+    text-align: center;
+    width: 250px;
+    position: relative;
+    padding-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.bidding-status {
+    display: block;
+    padding: 4px 8px;
+    font-weight: bold;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+}
+
+.bidding-status.active {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--text-color);
+}
+
+.bidding-status.inactive {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--text-color);
+}
+
+.admin-type-label {
+    margin-right: 10px;
+    font-weight: bold;
+    color: gold;
+}
+
+.admin-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#item-form, #chat {
+    margin: 20px;
+}
+
+#chat-window {
+    border: 1px solid #ccc;
+    height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+#chat-input {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.thumbnail {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #f5f5f5;
+}
+
+.modal {
+    display: flex; /* Use flexbox for centering */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 1000px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.modal-content {
+    max-width: 800px;
+    width: 100%;
+    height: 600px;
+    object-fit: contain;
+    background-color: #f5f5f5;
+    margin: 0 auto;
+}
+
+.modal-info {
+    text-align: left;
+    padding: 15px;
+    background-color: var(--background-color);
+    border-radius: 4px;
+}
+
+.modal-info h3 {
+    margin-top: 0;
+    color: var(--text-color);
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: var(--text-color);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.close:hover {
+    color: #666;
+}
+
+#add-item-form {
+    display: flex;
+    flex-direction: column;
+    gap: 150px; /* Space between form elements */
+    width: 70%;
+    margin-left: 5%;
+    padding: 10px;
+    background-color: var(--background-color);
+}
+
+#itemForm {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Split into two equal columns */
+    gap: 30px;
+    align-items: start;
+}
+
+#imagePreview {
+    max-width: 100%; /* Limit the size of the preview */
+    max-height: 200px; /* Set a maximum height */
+    display: none; /* Initially hidden */
+    border: 1px solid #ccc; /* Add a border */
+    padding: 10px; /* Add some padding */
+}
+
+input[type="text"],
+input[type="url"],
+textarea {
+    width: 100%; /* Full width */
+    padding: 10px; /* Add some padding */
+    margin-bottom: 10px;
+    border: 1px solid #ccc; /* Border style */
+    border-radius: 4px; /* Rounded corners */
+}
+
+label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+/* Update button styles for better contrast */
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+/* Primary action buttons (like Add Item, Place Bid) */
+.submit-button, 
+button[type="submit"],
+.add-response-button {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.submit-button:hover,
+button[type="submit"]:hover,
+.add-response-button:hover {
+    background-color: #3d8c40; /* Darker shade of primary color */
+}
+
+/* Secondary/Cancel buttons */
+.cancel-button,
+.bidding-toggle {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.cancel-button:hover,
+.bidding-toggle:hover {
+    background-color: #e0e0e0;
+}
+
+/* Bidding status buttons */
+.bidding-toggle.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.bidding-toggle.inactive {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Canned response buttons */
+.canned-response {
+    background-color: #f8f8f8;
+    color: #333;
+    border: 1px solid var(--primary-color);
+}
+
+.canned-response:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.accordion {
+    margin-bottom: 10px; /* Space between accordion sections */
+}
+
+.accordion h3 {
+    cursor: pointer; /* Pointer cursor for headers */
+    background-color: var(--background-color); /* Background color for headers */
+    padding: 10px; /* Padding for headers */
+    border: 1px solid #ccc; /* Border for headers */
+}
+
+.accordion-content {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px; /* Padding for content */
+    border: 1px solid #ccc; /* Border for content */
+    border-top: none; /* Remove top border to connect with header */
+}
+
+.logout-button {
+    position: fixed; /* Change from absolute to fixed */
+    top: 10px;
+    right: 10px;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1000; /* Ensure it stays above other content */
+}
+
+.logout-button:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Add/update responsive styles */
+@media screen and (max-width: 768px) {
+    .auction-item {
+        width: 100%; /* Full width on mobile */
+        margin: 10px 0;
+    }
+
+    .modal-container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .modal-content {
+        height: 400px;
+    }
+
+    .thumbnail {
+        width: 120px; /* Slightly larger thumbnails on mobile */
+    }
+
+    .close {
+        top: 5px;
+        right: 10px;
+        font-size: 24px; /* Slightly smaller close button */
+        padding: 10px; /* Larger touch target */
+    }
+
+    .bidding-status {
+        font-size: 14px; /* Slightly smaller font for status */
+    }
+
+    /* Improve form layout on mobile */
+    #add-item-form {
+        width: 90%;
+        margin: 10px auto;
+        gap: 20px;
+    }
+
+    #itemForm {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+
+    /* Improve button touch targets */
+    button {
+        padding: 12px 24px; /* Larger touch target */
+        margin: 5px 0;
+        min-height: 44px; /* Minimum touch target size */
+    }
+
+    /* Adjust header layout */
+    header {
+        padding: 15px;
+        position: relative;
+    }
+
+    .logout-button {
+        /* Remove the previous mobile styles */
+        position: fixed; /* Keep it fixed */
+        top: 10px;
+        right: 10px;
+        font-size: 14px; /* Slightly smaller font on mobile */
+        padding: 8px 12px; /* Slightly smaller padding */
+    }
+
+    /* Add some padding to header to prevent overlap */
+    header {
+        padding-top: 50px; /* Make room for the fixed logout button */
+    }
+
+    /* Improve accordion readability */
+    .accordion h3 {
+        padding: 15px; /* Larger touch target */
+    }
+
+    .accordion-content {
+        padding: 15px;
+    }
+
+    /* Adjust modal text sizes */
+    .modal-info h3 {
+        font-size: 18px;
+    }
+
+    .modal-info p {
+        font-size: 14px;
+    }
+
+    .image-preview-grid {
+        grid-template-rows: auto; /* Let it flow naturally */
+        grid-template-columns: 1fr; /* Single column */
+    }
+
+    .image-preview-container {
+        min-height: 100px;
+    }
+}
+
+/* Add meta viewport if not already present in HTML */
+@viewport {
+    width: device-width;
+    zoom: 1.0;
+}
+
+.modal-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 50vh;
+    overflow: hidden;
+}
+
+@media screen and (max-width: 768px) {
+    .modal-image-container {
+        max-height: 40vh;
+    }
+
+    /* Prevent text selection when tapping on mobile */
+    .close, 
+    button,
+    .thumbnail {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+
+    /* Improve scrolling */
+    .modal-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+.add-item-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.add-item-button:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Form modal specific styles */
+.form-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-fields label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-fields input,
+.form-fields textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.form-fields textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.image-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.image-preview-grid {
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.image-input-group {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.image-input-group input[type="url"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.image-preview-container {
+    width: 100%;
+    height: 200px; /* Increase height */
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+.image-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.form-actions {
+    grid-column: 1 / -1; /* Make buttons span both columns */
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.form-actions button {
+    padding: 8px 20px; /* Reduce vertical padding */
+    font-size: 14px; /* Slightly smaller font */
+    min-width: 100px; /* Ensure minimum button width */
+}
+
+/* Update mobile styles */
+@media screen and (max-width: 768px) {
+    .form-content {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+
+    .modal-container {
+        padding: 20px;
+    }
+
+    .image-preview-container {
+        min-height: 150px;
+    }
+
+    .form-actions {
+        padding-top: 10px;
+        margin-top: 15px;
+    }
+
+    .form-actions button {
+        padding: 6px 16px; /* Even smaller on mobile */
+        min-width: 80px;
+    }
+}
+
+.carousel-button {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 16px;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.carousel-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.carousel-button.prev {
+    left: 10px;
+}
+
+.carousel-button.next {
+    right: 10px;
+}
+
+.modal-image-container {
+    position: relative;
+}
+
+.bidding-toggle {
+    padding: 8px 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.bidding-toggle.active {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.bidding-toggle.inactive {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* Add these styles */
+.spinner-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.bid-form {
+    padding: 20px;
+    text-align: left;
+}
+
+.bid-form p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+#current-bid-info,
+#minimum-bid-info {
+    color: var(--text-color);
+    font-style: italic;
+}
+
+#bid-amount {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#chat {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+}
+
+#chat-history {
+    margin-bottom: 15px;
+}
+
+#chat-messages {
+    height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.chat-message {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.admin-message {
+    margin-left: 20px;
+    background: #f0f7ff;
+}
+
+.user-message {
+    margin-right: 20px;
+    background: #f5f5f5;
+}
+
+.admin-label {
+    background: #4a90e2;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.user-label {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.chat-info {
+    display: flex;
+    gap: 10px;
+    font-size: 0.8em;
+    color: var(--text-color);
+    margin-top: 4px;
+    align-items: center;
+}
+
+.message-sender {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.own-message {
+    background: #e8f5e9;
+    margin-left: auto;  /* Push to right side */
+    margin-right: 0;
+    border-radius: 8px 8px 0 8px;
+}
+
+.admin-response {
+    background: #e3f2fd;
+    margin-right: auto;  /* Push to left side */
+    margin-left: 0;
+    border-left: 3px solid #1976d2;
+    border-radius: 8px 8px 8px 0;
+}
+
+.chat-timestamp {
+    color: var(--text-color);
+    font-size: 0.8em;
+}
+
+#chat-input-area {
+    display: flex;
+    gap: 10px;
+}
+
+#chat-input {
+    flex: 1;
+    min-height: 60px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+#load-all-history {
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#load-all-history:hover {
+    background: #e0e0e0;
+}
+
+#admin-chat-tabs {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 5px;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    min-width: 100px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tab-button:hover {
+    background: #e3f2fd;
+    border-color: #1976d2;
+}
+
+.tab-button.active {
+    background: #1976d2;
+    color: white;
+    border-color: #1976d2;
+}
+
+.tab-button .user-email {
+    font-weight: 500;
+    display: block;
+    font-size: 0.9em;
+}
+
+.tab-button .last-active {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+#active-users-list {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.user-chat-item {
+    padding: 10px;
+    margin: 5px 0;
+    background: #f8f8f8;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.user-chat-item:hover {
+    background: #eee;
+}
+
+.user-chat-item.active {
+    background: #e3f2fd;
+    border-left: 3px solid #1976d2;
+}
+
+.chat-message {
+    position: relative;
+    padding-right: 60px;
+}
+
+.message-label {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    font-size: 0.8em;
+    color: var(--text-color);
+}
+
+.session-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.session-button {
+    padding: 10px 15px;
+    background: var(--background-color);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.session-button:hover {
+    background: var(--background-color);
+    border-color: var(--primary-color);
+}
+
+.session-button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.session-button.active .user-email {
+        color: white !important;
+}
+
+.session-button .user-email {
+    font-weight: 500;
+    display: block;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+
+/* Styledisabled chat input */
+#chat-input:disabled, 
+#send-message:disabled {
+    background-color: var(--background-color);
+    cursor: not-allowed;
+}
+
+/* Admin Tools Panel */
+#admin-tools {
+    margin-top: 20px;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    background: var(--background-color);
+}
+
+#search-panel h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.search-container {
+    width: 100%;
+}
+
+#item-search {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+#search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Remove the tab-related styles since we're not using tabs anymore */
+.admin-tools-tabs {
+    display: none;
+}
+
+.tool-panel {
+    display: block !important;
+}
+
+/* Canned Responses */
+.canned-responses {
+    margin-top: 20px;
+}
+
+.response-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.canned-response {
+    padding: 8px 12px;
+    background: var(--background-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.canned-response:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.admin-only {
+    display: none; /* Hidden by default */
+}
+
+.item-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.item-details span {
+    background: var(--background-color);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.bid-status {
+    font-weight: 500;
+}
+
+.bid-status.active {
+    color: var(--text-color);
+}
+
+.bid-status.inactive {
+    color: var(--text-color);
+}
+
+.search-error {
+    padding: 10px;
+    color: #c62828;
+    text-align: center;
+}
+
+/* Shared form styles */
+.form-container {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background: var(--background-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#login, #registration {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background: var(--background-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#login-form, #registration-form {
+    display: grid;
+    gap: 15px;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+#login-form label,
+#registration-form label {
+    font-size: 0.9em;
+    margin-bottom: 4px;
+    color: var(--text-color);
+    display: block;
+}
+
+#login-form input,
+#registration-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+#login-form button,
+#registration-form button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#login-form button:hover,
+#registration-form button:hover {
+    background-color: var(--secondary-color);
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.form-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+#login-error {
+    color: var(--secondary-color);
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 480px) {
+    #login, #registration {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    #login-form input,
+    #registration-form input {
+        padding: 10px;
+    }
+}
+
+/* Typing indicator */
+.typing-indicator {
+    padding: 5px 10px;
+    color: #666;
+    font-style: italic;
+    font-size: 0.9em;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+/* Unread message count */
+.session-button {
+    position: relative;
+}
+
+.unread-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.8em;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Message status */
+.message-status {
+    font-size: 0.8em;
+    color: #666;
+    margin-left: 5px;
+}
+
+.message-unread {
+    font-weight: bold;
+}
+
+.token-info {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.token-info code {
+    display: block;
+    padding: 10px;
+    margin: 10px 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+#rss-panel {
+    margin-top: 20px;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.search-result-item {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.search-result-item:hover {
+    background-color: var(--background-color);
+}
+
+.item-header {
+    margin-bottom: 10px;
+}
+
+.canned-responses {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+.canned-responses h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.response-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.canned-response {
+    padding: 6px 12px;
+    background: var(--background-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.canned-response:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.add-response-form {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.response-input {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.add-response-button {
+    background: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-response-button:hover {
+    background: var(--secondary-color);
+}
+
+.canned-responses {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.response-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Update modal and form styles */
+.form-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr; /* Change from 2fr 1fr for better proportions */
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    min-height: 300px; /* Make description taller */
+    padding: 12px;
+    font-size: 16px;
+}
+
+.image-input-group {
+    margin-bottom: 20px;
+}
+
+.image-input-group:last-child {
+    margin-bottom: 0;
+}
+
+.image-input-group input[type="url"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.image-preview-container {
+    width: 100%;
+    height: 200px; /* Increase height */
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+.image-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
+        gap: 20px;
+    }
+
+    .modal-container {
+        padding: 20px;
+    }
+
+    .form-group textarea {
+        min-height: 150px;
+    }
+}
+
+.modal-container h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: var(--text-color);
+}
