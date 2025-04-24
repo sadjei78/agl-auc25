@@ -1,4 +1,4 @@
-import { database } from './firebase-config.js';
+import { database, auth } from './firebase-config.js';
 
 class Chat {
     constructor() {
@@ -7,9 +7,16 @@ class Chat {
         this.currentChatUser = null;
         this.messagesRef = database.ref('messages');
         this.activeUsersRef = database.ref('activeUsers');
+        this.typingRef = database.ref('typing');
         this.unreadCounts = {};
         this.initializeElements();
-        this.setupTypingIndicator();
+        
+        // Wait for auth state before setting up typing indicator
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                this.setupTypingIndicator();
+            }
+        });
     }
 
     initializeElements() {
@@ -302,27 +309,37 @@ class Chat {
     }
 
     setupTypingIndicator() {
-        const typingRef = database.ref('typing');
         const typingIndicator = document.getElementById('typing-indicator');
         const typingUser = typingIndicator?.querySelector('.typing-user');
         
         this.chatInput?.addEventListener('input', () => {
-            if (!this.currentUser) return;
+            // Check if user is authenticated
+            const user = auth.currentUser;
+            if (!user || !this.currentUser) return;
             
-            typingRef.child(this.sanitizeEmailForPath(this.currentUser)).set({
+            const userPath = this.sanitizeEmailForPath(this.currentUser);
+            this.typingRef.child(userPath).set({
                 isTyping: this.chatInput.value.length > 0,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 email: this.currentUser
+            }).catch(error => {
+                console.error('Error updating typing status:', error);
             });
         });
 
         // Clear typing status when user stops typing
         this.chatInput?.addEventListener('blur', () => {
-            typingRef.child(this.sanitizeEmailForPath(this.currentUser)).remove();
+            const user = auth.currentUser;
+            if (!user || !this.currentUser) return;
+            
+            this.typingRef.child(this.sanitizeEmailForPath(this.currentUser)).remove()
+                .catch(error => {
+                    console.error('Error clearing typing status:', error);
+                });
         });
 
         // Listen for typing status changes
-        typingRef.on('value', (snapshot) => {
+        this.typingRef.on('value', (snapshot) => {
             const typing = snapshot.val();
             if (!typing || !typingIndicator || !typingUser) return;
 
