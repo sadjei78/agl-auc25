@@ -11,9 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      # Create config files
+      # Create a deployment directory
+      - name: Create deployment directory
+        run: |
+          mkdir deploy
+          cp -r * deploy/ || true
+          cd deploy
+      
+      # Create config files in deployment directory
       - name: Create firebase config
         run: |
+          cd deploy
           cat > firebase-config.js << 'EOF'
           // Initialize Firebase with your config
           const firebaseConfig = {
@@ -29,13 +37,10 @@ jobs:
           const database = firebase.database();
           export { database };
           EOF
-          
-          echo "Firebase config created:"
-          ls -l firebase-config.js
-          cat firebase-config.js
 
       - name: Create app config
         run: |
+          cd deploy
           cat > config.js << 'EOF'
           export const config = {
               scriptURL: "${{ secrets.SCRIPT_URL }}",
@@ -45,13 +50,10 @@ jobs:
               }
           };
           EOF
-          
-          echo "App config created:"
-          ls -l config.js
-          cat config.js
 
-      - name: List all files before deploy
+      - name: List deployment files
         run: |
+          cd deploy
           echo "Files to be deployed:"
           ls -la
 
@@ -60,8 +62,8 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          force_orphan: true  # Force push to gh-pages
+          publish_dir: ./deploy
+          force_orphan: true
           commit_message: "Deploy with config files"
 
 
