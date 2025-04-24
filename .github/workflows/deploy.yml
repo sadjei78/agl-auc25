@@ -11,15 +11,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      # Create config files from secrets
+      # Create config files
       - name: Create config files
         run: |
-          echo "${{ secrets.FIREBASE_CONFIG }}" > firebase-config.js
-          echo "${{ secrets.APP_CONFIG }}" > config.js
-          ls -la  # List files
-          echo "Files created. Checking contents..."
-          head -n 1 firebase-config.js
-          head -n 1 config.js
+          # Create firebase config
+          cat > firebase-config.js << 'EOL'
+          ${{ secrets.FIREBASE_CONFIG }}
+          EOL
+          
+          # Create app config
+          cat > config.js << 'EOL'
+          ${{ secrets.APP_CONFIG }}
+          EOL
+          
+          # Verify files
+          echo "Created files:"
+          ls -la *.js
           
       # Deploy to GitHub Pages
       - name: Deploy
@@ -27,4 +34,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+
 
