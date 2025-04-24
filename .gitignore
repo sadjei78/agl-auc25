@@ -6,6 +6,10 @@ gScript.js
 Code.gs
 DevTasks
 
+# But track the templates
+!config.template.js
+!firebase-config.template.js
+
 # IDE/Editor files
 .vscode/
 .idea/
