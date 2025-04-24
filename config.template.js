@@ -11,7 +11,7 @@ export const config = {
     },
     scriptURL: "YOUR_GOOGLE_SCRIPT_URL",
     githubPages: {
-        baseUrl: "https://YOUR_GITHUB_USERNAME.github.io/REPO_NAME",
+        baseUrl: "https://sadjei78.github.io/agl-auc25",
         environment: "production"
     }
 }; 

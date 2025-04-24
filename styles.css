@@ -108,7 +108,7 @@ header {
 }
 
 .modal {
-    display: flex; /* Use flexbox for centering */
+    display: none;  /* Hidden by default */
     position: fixed;
     z-index: 1;
     left: 0;
@@ -116,7 +116,7 @@ header {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+    background-color: rgba(0, 0, 0, 0.8);
     justify-content: center;
     align-items: center;
 }

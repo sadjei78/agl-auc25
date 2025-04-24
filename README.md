@@ -5,7 +5,7 @@ A web-based silent auction system with real-time chat support.
 ## Setup
 
 1. Clone the repository
-2. Copy `config.template.js` to `config.js` and fill in your configuration values
+2. Copy `config.template.js` to `config.js` and update with your settings
 3. Copy `firebase-config.template.js` to `firebase-config.js` and add your Firebase credentials
 4. Copy `restream-chat.template.js` to `restream-chat.js` and add your Restream credentials
 5. Set up Google Apps Script:

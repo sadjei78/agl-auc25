@@ -1,4 +1,4 @@
-import config from './config.js';
+import { config } from './config.js';
 import { chat } from './chat.js';
 // import { initializeRestreamChat, disconnectRestreamChat } from './restream-chat.js';
 
@@ -50,8 +50,6 @@ function hideSpinner() {
 
 // Move these functions outside of DOMContentLoaded and attach to window
 window.showLargeImage = function(imageSrc, itemName, description, totalBids, currentBid, startingBid, biddingActive, image2, image3, itemId) {
-    console.log('Modal Images:', { imageSrc, image2, image3 }); // Debug log
-
     const modal = document.getElementById("image-modal");
     const modalImage = document.getElementById("modal-image");
     const modalItemName = document.getElementById("modal-item-name");
@@ -102,8 +100,6 @@ window.showLargeImage = function(imageSrc, itemName, description, totalBids, cur
     if (image2 && image2 !== 'undefined') currentImages.push(image2);
     if (image3 && image3 !== 'undefined') currentImages.push(image3);
     currentImageIndex = 0;
-
-    console.log('Processed Images:', currentImages); // Debug log
 
     // Show/hide carousel buttons based on number of images
     const prevButton = modal.querySelector('.prev');
@@ -160,6 +156,9 @@ window.updateImagePreview = function(imageNum) {
 
 // Add these modal functions here
 window.openAddItemModal = function() {
+    const adminType = localStorage.getItem('adminType');
+    if (adminType === 'user') return;
+    
     const modal = document.getElementById('add-item-modal');
     if (!modal) return;
     
@@ -197,7 +196,8 @@ window.insertItemDetails = function(itemName, currentBid, totalBids, isActive) {
 
 // Add this function to handle login success
 function handleLoginSuccess(result, loginEmail) {
-    console.log('Login success with result:', result); // Debug log
+    // Remove this line
+    // console.log('Login success with result:', result); // Debug log
     
     // Store session info and user details
     localStorage.setItem('sessionToken', result.token);
@@ -218,11 +218,6 @@ function handleLoginSuccess(result, loginEmail) {
     // Initialize chat after successful login
     initializeChat();
 
-    if (result.adminType !== 'user') {
-        console.log('Initialize Restream Chat');
-       // initializeRestreamChat();
-    }
-
     // Initialize admin tools if admin
     if (result.adminType !== 'user') {
         initializeAdminTools();
@@ -231,6 +226,16 @@ function handleLoginSuccess(result, loginEmail) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Remove these lines since they're duplicated
+    // const addItemModal = document.getElementById('add-item-modal');
+    // const imageModal = document.getElementById('image-modal');
+    // const bidModal = document.getElementById('bid-modal');
+    
+    // Instead, just set the display
+    document.getElementById('add-item-modal').style.display = 'none';
+    document.getElementById('image-modal').style.display = 'none';
+    document.getElementById('bid-modal').style.display = 'none';
+    
     // Get form elements
     const loginForm = document.getElementById('login-form');
     const registrationForm = document.getElementById('registration-form');
@@ -1438,25 +1443,17 @@ function stopActiveSessionPolling() {
 }
 
 async function generateNewRSSToken() {
-    console.log('Generate token clicked'); // Debug log
     const email = localStorage.getItem('userEmail');
     const token = localStorage.getItem('sessionToken');
     
-    console.log('Stored credentials:', { email, token }); // Debug log
-    
     const url = `${scriptURL}?action=generateRSSToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
-    console.log('Request URL:', url); // Debug log
 
     try {
-        console.log('Fetching token...'); // Debug log
         const response = await fetch(url);
-        console.log('Raw response:', response); // Debug log
         const data = await response.json();
-        console.log('Response data:', data); // Debug log
         
         if (data.success) {
             const tokenDisplay = document.getElementById('rss-token-display');
-            console.log('Found token display:', !!tokenDisplay); // Debug log
             const rssUrl = `${scriptURL}?action=getRSSFeed&token=${data.token}`;
             
             tokenDisplay.innerHTML = `
@@ -1469,7 +1466,7 @@ async function generateNewRSSToken() {
                 </div>
             `;
         } else {
-            console.error('Token generation failed:', data.error); // Debug log
+            console.error('Token generation failed:', data.error);
             alert('Failed to generate RSS token: ' + (data.error || 'Unknown error'));
         }
     } catch (error) {
@@ -1527,14 +1524,8 @@ function displayAuctionItems(items) {
     container.innerHTML = '';
 
     items.forEach(item => {
-        // Log the item data
-        console.log('Item data:', item);
-        
-        const images = [item.image1, item.image2, item.image3].filter(img => img); // Filter out empty values
+        const images = [item.image1, item.image2, item.image3].filter(img => img);
         const primaryImage = images[0] || 'placeholder-image-url.jpg';
-        
-        console.log('Images array:', images);
-        console.log('Primary image:', primaryImage);
 
         const itemElement = document.createElement('div');
         itemElement.className = 'auction-item';
