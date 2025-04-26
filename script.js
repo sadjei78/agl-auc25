@@ -1607,3 +1607,23 @@ function initializeAdminTools() {
     }
 }
 
+// Add this function near the top with other utility functions
+async function loadAuctionItems() {
+    try {
+        showSpinner();
+        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const items = await response.json();
+        
+        if (Array.isArray(items)) {
+            displayAuctionItems(items);
+        } else {
+            console.error('Invalid items data received:', items);
+        }
+    } catch (error) {
+        console.error('Error loading auction items:', error);
+    } finally {
+        hideSpinner();
+    }
+}
+
