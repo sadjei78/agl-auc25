@@ -226,8 +226,8 @@ async function handleLoginSuccess(result, loginEmail) {
         // Display admin badge
         displayAdminBadge(result.adminType);
 
-        // Load initial categories view
-        await loadInitialCategories();
+        // Load all auction items
+        await loadAuctionItems();
 
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
@@ -378,8 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Initialize chat
                     chat.initialize(regEmail.value, data.adminType === 'admin');
 
-                    // Load initial categories view
-                    await loadInitialCategories();
+                    // Load all auction items
+                    await loadAuctionItems();
                 } else {
                     alert(data.message || 'Registration failed');
                 }
