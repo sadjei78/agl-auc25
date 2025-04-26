@@ -208,8 +208,8 @@ function initializeAdminTools() {
 }
 
 function initializeAdminChatSessions() {
+    // Just start polling - it includes the initial load
     startActiveSessionPolling();
-    loadActiveUsers();
 }
 
 // Update chat initialization in handleLoginSuccess
@@ -1034,22 +1034,34 @@ function setupAdminTabs() {
     });
 }
 
-function loadActiveUsers() {
+// Update loadActiveUsers to be async
+async function loadActiveUsers() {
     const email = localStorage.getItem('userEmail');
     const token = localStorage.getItem('sessionToken');
     
-    if (!email || !token) return;
+    if (!email || !token) {
+        console.error('No session token or email found');
+        return;
+    }
 
-    fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && Array.isArray(data.activeUsers)) {
-                displaySessionButtons(data.activeUsers);
-            } else {
-                console.error('Invalid active users data:', data);
-            }
-        })
-        .catch(error => console.error('Error loading active users:', error));
+    try {
+        const params = new URLSearchParams({
+            action: 'getActiveUsers',
+            email: email,
+            token: token
+        });
+
+        const response = await fetch(`${scriptURL}?${params.toString()}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            updateActiveUsersList(data.users);
+        } else {
+            console.error('Failed to load active users:', data.message);
+        }
+    } catch (error) {
+        console.error('Error loading active users:', error);
+    }
 }
 
 function displaySessionButtons(users) {
@@ -1397,7 +1409,7 @@ function startActiveSessionPolling() {
     
     // Start new polling
     loadActiveUsers(); // Initial load
-    activeSessionPollingInterval = setInterval(loadActiveUsers, SESSION_POLLING_INTERVAL); // Poll every 30 seconds
+    activeSessionPollingInterval = setInterval(loadActiveUsers, SESSION_POLLING_INTERVAL);
 }
 
 function stopActiveSessionPolling() {
