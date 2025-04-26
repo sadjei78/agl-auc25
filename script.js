@@ -1453,23 +1453,20 @@ function displayAuctionItems(items) {
 
 // Update initializeAdminChatSessions function
 async function initializeAdminChatSessions() {
-    // First check if user is logged in
-    const user = auth.currentUser;
-    if (!user) {
+    // Check admin status from localStorage
+    const adminType = localStorage.getItem('adminType');
+    const userEmail = localStorage.getItem('userEmail');
+
+    if (!userEmail) {
         console.log('No user logged in');
         return;
     }
 
     try {
-        // Check if user is admin
-        const adminRef = ref(database, `admins/${user.uid}`);
-        const adminSnapshot = await get(adminRef);
-        const isAdmin = adminSnapshot.exists();
-
-        if (isAdmin) {
+        if (adminType === 'admin') {
             console.log('Initializing admin chat sessions');
             // Initialize chat with admin privileges
-            chat.initialize(user.email, true);
+            chat.initialize(userEmail, true);
             
             // Show admin badge and chat elements
             const adminBadge = document.getElementById('admin-badge');
@@ -1482,7 +1479,7 @@ async function initializeAdminChatSessions() {
         } else {
             console.log('User is not an admin');
             // Initialize regular user chat
-            chat.initialize(user.email, false);
+            chat.initialize(userEmail, false);
             
             // Hide admin elements
             const sessionButtons = document.querySelector('.session-buttons');
@@ -1492,18 +1489,9 @@ async function initializeAdminChatSessions() {
             if (adminTools) adminTools.style.display = 'none';
         }
     } catch (error) {
-        console.error('Error checking admin status:', error);
+        console.error('Error initializing chat:', error);
         // Initialize as regular user if there's an error
-        if (user) {
-            chat.initialize(user.email, false);
-            
-            // Hide admin elements
-            const sessionButtons = document.querySelector('.session-buttons');
-            const adminTools = document.getElementById('admin-tools');
-            
-            if (sessionButtons) sessionButtons.style.display = 'none';
-            if (adminTools) adminTools.style.display = 'none';
-        }
+        chat.initialize(userEmail, false);
     }
 }
 
