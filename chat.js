@@ -1,13 +1,14 @@
-import { database, auth } from './firebase-config.js';
+import { auth, database, ref, set } from './firebase-config.js';
+import { onValue, push, get, child } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
 class Chat {
     constructor() {
         this.currentUser = null;
         this.isAdmin = false;
         this.currentChatUser = null;
-        this.messagesRef = database.ref('messages');
-        this.activeUsersRef = database.ref('activeUsers');
-        this.typingRef = database.ref('typing');
+        this.messagesRef = ref(database, 'messages');
+        this.activeUsersRef = ref(database, 'activeUsers');
+        this.typingRef = ref(database, 'typing');
         this.unreadCounts = {};
         this.initializeElements();
         
@@ -52,14 +53,11 @@ class Chat {
         }
 
         // Initialize Firebase chat
-        const chatRef = firebase.database().ref('chats');
-        const messagesRef = chatRef.child(userEmail.replace(/[.#$[\]]/g, '_'));
+        const chatRef = ref(database, 'chats');
+        const messagesRef = child(chatRef, userEmail.replace(/[.#$[\]]/g, '_'));
 
         // Remove any existing listeners before adding new ones
-        messagesRef.off();
-        
-        // Listen for new messages
-        messagesRef.on('value', (snapshot) => {
+        onValue(messagesRef, (snapshot) => {
             this.displayMessages(snapshot.val() || {});
         });
 
@@ -91,7 +89,7 @@ class Chat {
         }
 
         // Listen for active users
-        this.activeUsersRef.on('value', (snapshot) => {
+        onValue(this.activeUsersRef, (snapshot) => {
             console.log('Active users update:', snapshot.val()); // Debug log
             const users = snapshot.val() || {};
             this.updateSessionButtons(users);
@@ -109,13 +107,19 @@ class Chat {
         const safeEmail = this.sanitizeEmailForPath(this.currentUser);
 
         // Mark user as active with sanitized email
-        this.activeUsersRef.child(safeEmail).set({
+        set(child(this.activeUsersRef, safeEmail), {
             email: this.currentUser, // Keep original email for display
-            lastActive: firebase.database.ServerValue.TIMESTAMP
+            lastActive: Date.now()
         });
 
         // Remove user when they disconnect
-        this.activeUsersRef.child(safeEmail).onDisconnect().remove();
+        onValue(child(this.activeUsersRef, safeEmail), (snapshot) => {
+            if (snapshot.exists()) {
+                // User is still active
+            } else {
+                // User has disconnected
+            }
+        });
 
         // Start listening for messages
         this.listenForMessages();
@@ -170,7 +174,7 @@ class Chat {
         const messageData = {
             sender: this.currentUser,
             message: this.chatInput.value.trim(),
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            timestamp: Date.now(),
             isAdmin: this.isAdmin,
             recipient: this.isAdmin ? this.currentChatUser : 'admin',
             read: false,
@@ -191,7 +195,8 @@ class Chat {
                 ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
                 : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
                 
-            await this.messagesRef.child(chatPath).push(messageData);
+            const newMessageRef = push(ref(this.messagesRef, chatPath));
+            await set(newMessageRef, messageData);
             this.chatInput.value = '';
             this.chatInput.focus();
         } catch (error) {
@@ -220,25 +225,10 @@ class Chat {
     }
 
     listenForMessages() {
-        this.messagesRef.off(); // Remove existing listeners
-
-        // Use sanitized email for paths
-        const chatPath = this.isAdmin && this.currentChatUser
-            ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
-            : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
-
-        this.messagesRef.child(chatPath).on('child_added', (snapshot) => {
-            const message = snapshot.val();
-            const messageId = snapshot.key;
-            
-            // Update unread count when new message arrives
-            if (!message.read) {
-                this.updateUnreadCount(message.sender);
-            }
-            
-            // Display message if relevant
-            if (this.shouldDisplayMessage(message)) {
-                this.displayMessage(message, messageId);
+        onValue(this.messagesRef, (snapshot) => {
+            const messages = snapshot.val();
+            if (messages) {
+                this.displayMessages(messages);
             }
         });
     }
@@ -282,10 +272,14 @@ class Chat {
 
     setupNotifications() {
         if (!this.isAdmin) {
-            this.messagesRef.on('child_added', (snapshot) => {
-                const message = snapshot.val();
-                if (message.recipient === this.currentUser && message.isAdmin) {
-                    this.showNotification('New Message', 'You have a new message from admin');
+            onValue(this.messagesRef, (snapshot) => {
+                const messages = snapshot.val();
+                if (messages) {
+                    Object.values(messages).forEach(message => {
+                        if (message.recipient === this.currentUser && message.isAdmin) {
+                            this.showNotification('New Message', 'You have a new message from admin');
+                        }
+                    });
                 }
             });
         }
@@ -305,7 +299,7 @@ class Chat {
 
     markMessageAsRead(messageId) {
         const chatPath = `messages/${this.sanitizeEmailForPath(this.currentUser)}/${messageId}`;
-        this.messagesRef.child(chatPath).update({ read: true });
+        set(ref(this.messagesRef, chatPath), { read: true });
     }
 
     setupTypingIndicator() {
@@ -318,9 +312,9 @@ class Chat {
             if (!user || !this.currentUser) return;
             
             const userPath = this.sanitizeEmailForPath(this.currentUser);
-            this.typingRef.child(userPath).set({
+            set(ref(this.typingRef, userPath), {
                 isTyping: this.chatInput.value.length > 0,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: Date.now(),
                 email: this.currentUser
             }).catch(error => {
                 console.error('Error updating typing status:', error);
@@ -332,14 +326,14 @@ class Chat {
             const user = auth.currentUser;
             if (!user || !this.currentUser) return;
             
-            this.typingRef.child(this.sanitizeEmailForPath(this.currentUser)).remove()
+            set(ref(this.typingRef, this.sanitizeEmailForPath(this.currentUser)), null)
                 .catch(error => {
                     console.error('Error clearing typing status:', error);
                 });
         });
 
         // Listen for typing status changes
-        this.typingRef.on('value', (snapshot) => {
+        onValue(this.typingRef, (snapshot) => {
             const typing = snapshot.val();
             if (!typing || !typingIndicator || !typingUser) return;
 
@@ -362,30 +356,28 @@ class Chat {
         if (!this.isAdmin) return;
         
         const safeEmail = this.sanitizeEmailForPath(userEmail);
-        this.messagesRef.child(safeEmail).orderByChild('read')
-            .equalTo(false)
-            .once('value', (snapshot) => {
-                const unreadCount = snapshot.numChildren();
-                this.unreadCounts[userEmail] = unreadCount;
-                
-                // Update UI
-                const sessionButton = this.sessionButtons
-                    ?.querySelector(`[data-user="${userEmail}"]`);
-                
-                if (sessionButton) {
-                    let countBadge = sessionButton.querySelector('.unread-count');
-                    if (unreadCount > 0) {
-                        if (!countBadge) {
-                            countBadge = document.createElement('span');
-                            countBadge.className = 'unread-count';
-                            sessionButton.appendChild(countBadge);
-                        }
-                        countBadge.textContent = unreadCount;
-                    } else if (countBadge) {
-                        countBadge.remove();
+        onValue(child(this.messagesRef, safeEmail, 'read'), (snapshot) => {
+            const unreadCount = snapshot.numChildren();
+            this.unreadCounts[userEmail] = unreadCount;
+            
+            // Update UI
+            const sessionButton = this.sessionButtons
+                ?.querySelector(`[data-user="${userEmail}"]`);
+            
+            if (sessionButton) {
+                let countBadge = sessionButton.querySelector('.unread-count');
+                if (unreadCount > 0) {
+                    if (!countBadge) {
+                        countBadge = document.createElement('span');
+                        countBadge.className = 'unread-count';
+                        sessionButton.appendChild(countBadge);
                     }
+                    countBadge.textContent = unreadCount;
+                } else if (countBadge) {
+                    countBadge.remove();
                 }
-            });
+            }
+        });
     }
 
     shouldDisplayMessage(message) {
@@ -419,7 +411,16 @@ class Chat {
     }
 
     displayMessages(messages) {
-        // Implementation of displayMessages method
+        this.chatMessages.innerHTML = '';
+        Object.values(messages).forEach(msg => {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.textContent = `${msg.sender}: ${msg.message}`;
+            this.chatMessages.appendChild(messageElement);
+        });
+        
+        // Scroll to bottom
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 }
 
