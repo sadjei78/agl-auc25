@@ -747,20 +747,20 @@ async function loadActiveUsers() {
     }
 
     try {
-        const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+        // Use getChatMessages instead of getActiveUsers
+        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         
-        if (data.success && Array.isArray(data.users)) {
-            displaySessionButtons(data.users);
+        if (data.success && Array.isArray(data.activeUsers)) {
+            displaySessionButtons(data.activeUsers);
         } else {
             console.error('Invalid active users data:', data);
         }
     } catch (error) {
         console.error('Error loading active users:', error);
-        // Don't throw the error, just log it to prevent breaking the polling
     }
 }
 
