@@ -247,6 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const auctionItemsSection = document.getElementById('auction-items');
     const chatSection = document.getElementById('chat');
     const adminBadge = document.getElementById('admin-badge');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const addItemModal = document.getElementById('add-item-modal');
+    const imageModal = document.getElementById('image-modal');
+    const bidModal = document.getElementById('bid-modal');
 
     // Check if we have the required elements
     if (!loginForm) {
@@ -255,9 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Hide modals initially
-    document.getElementById('add-item-modal')?.style.display = 'none';
-    document.getElementById('image-modal')?.style.display = 'none';
-    document.getElementById('bid-modal')?.style.display = 'none';
+    if (addItemModal) addItemModal.style.display = 'none';
+    if (imageModal) imageModal.style.display = 'none';
+    if (bidModal) bidModal.style.display = 'none';
 
     // Hide all sections except login initially
     if (registrationSection) registrationSection.style.display = 'none';
@@ -371,9 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemForm = document.getElementById('itemForm');   
     const chatInput = document.getElementById('chat-input');
     const chatWindow = document.getElementById('chat-window');
-
-    // Show login section by default
-    const welcomeMessage = document.getElementById('welcome-message');
 
     // Variable to store the logged-in user's email
     let userEmail = '';
@@ -776,7 +777,6 @@ document.addEventListener('DOMContentLoaded', () => {
     header.appendChild(logoutButton);
 
     // Keep only the event listeners
-    const addItemModal = document.getElementById('add-item-modal');
     if (addItemModal) {
         addItemModal.addEventListener('click', function(event) {
             if (event.target === this) {
