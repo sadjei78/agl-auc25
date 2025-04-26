@@ -576,13 +576,27 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadAuctionItems = async function() {
         try {
             showSpinner();
-            const response = await fetch(`${scriptURL}?action=getAuctionItems`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const items = await response.json();
+            const response = await fetch(`${scriptURL}?action=getCategoryCounts`);
+            const categoryCounts = await response.json();
             
-            if (Array.isArray(items)) {
-                displayCategories(items);  // Show categories in accordion style
-            }
+            const container = document.getElementById('auction-items-container');
+            container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
+
+            // Sort categories alphabetically
+            const sortedCategories = Object.entries(categoryCounts)
+                .filter(([category]) => category !== 'true' && category !== 'false')
+                .sort(([a], [b]) => a.localeCompare(b));
+
+            // Create accordion for each category
+            sortedCategories.forEach(([category, count]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'accordion';
+                categoryDiv.innerHTML = `
+                    <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${count})</h3>
+                    <div class="category-items" id="category-${escapeHtml(category)}"></div>
+                `;
+                container.appendChild(categoryDiv);
+            });
         } catch (error) {
             console.error('Error loading auction items:', error);
         } finally {
@@ -1007,11 +1021,17 @@ async function loadActiveUsers() {
     }
 
     try {
-        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+        const params = new URLSearchParams({
+            action: 'getActiveUsers',  // Changed from getChatMessages
+            email: email,
+            token: token
+        });
+
+        const response = await fetch(`${scriptURL}?${params}`);
         const data = await response.json();
         
-        if (data.success && Array.isArray(data.activeUsers)) {
-            displaySessionButtons(data.activeUsers);
+        if (data.success && Array.isArray(data.users)) {  // Changed from activeUsers
+            displaySessionButtons(data.users);  // Pass users array
         } else {
             console.error('Invalid active users data:', data);
         }
