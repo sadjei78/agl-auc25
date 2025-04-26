@@ -111,8 +111,8 @@ class Chat {
         }
         if (this.sendButton) this.sendButton.disabled = false;
 
-        // Load chat history
-        this.loadChatHistory(userEmail);
+        // Start listening for messages for this session
+        this.listenForMessages();
         
         // Highlight selected session
         const buttons = this.sessionButtons.getElementsByClassName('session-button');
@@ -188,7 +188,14 @@ class Chat {
     }
 
     listenForMessages() {
-        onValue(this.messagesRef, (snapshot) => {
+        // For users, only listen to their own messages
+        const chatPath = this.isAdmin && this.currentChatUser 
+            ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
+            : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
+            
+        // Remove any existing listeners before adding new ones
+        const chatRef = ref(database, chatPath);
+        onValue(chatRef, (snapshot) => {
             const messages = snapshot.val();
             if (messages) {
                 this.displayMessages(messages);
@@ -358,10 +365,27 @@ class Chat {
     }
 
     displayMessages(messages) {
+        if (!this.chatMessages) return;
         this.chatMessages.innerHTML = '';
-        Object.values(messages).forEach(msg => {
+        
+        // Sort messages by timestamp
+        const sortedMessages = Object.values(messages)
+            .filter(msg => {
+                if (this.isAdmin) {
+                    // Admin should only see messages from/to current chat user
+                    return msg.sender === this.currentChatUser || 
+                           (msg.sender === this.currentUser && msg.recipient === this.currentChatUser);
+                } else {
+                    // Users see their conversation with admin
+                    return msg.sender === this.currentUser || 
+                           (msg.isAdmin && msg.recipient === this.currentUser);
+                }
+            })
+            .sort((a, b) => a.timestamp - b.timestamp);
+
+        sortedMessages.forEach(msg => {
             const messageElement = document.createElement('div');
-            messageElement.className = 'chat-message';
+            messageElement.className = `chat-message ${msg.sender === this.currentUser ? 'sent' : 'received'}`;
             messageElement.textContent = `${msg.sender}: ${msg.message}`;
             this.chatMessages.appendChild(messageElement);
         });
