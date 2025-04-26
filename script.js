@@ -1312,27 +1312,36 @@ function displayItemsInCategory(category, items) {
     });
 }
 
-// Move this function outside DOMContentLoaded
+// Update loadAuctionItems to properly display categories and items
 window.loadAuctionItems = async function() {
     try {
         showSpinner();
-        const response = await fetch(`${scriptURL}?action=getCategoryCounts`);
-        const categoryCounts = await response.json();
+        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+        const items = await response.json();
         
         const container = document.getElementById('auction-items-container');
         container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
 
+        // Group items by category and count them
+        const categoryGroups = {};
+        items.forEach(item => {
+            const category = (item.category && item.category.trim()) || 'Uncategorized';
+            if (!categoryGroups[category]) {
+                categoryGroups[category] = [];
+            }
+            categoryGroups[category].push(item);
+        });
+
         // Sort categories alphabetically
-        const sortedCategories = Object.entries(categoryCounts)
-            .filter(([category]) => category !== 'true' && category !== 'false')
+        const sortedCategories = Object.entries(categoryGroups)
             .sort(([a], [b]) => a.localeCompare(b));
 
         // Create accordion for each category
-        sortedCategories.forEach(([category, count]) => {
+        sortedCategories.forEach(([category, categoryItems]) => {
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'accordion';
             categoryDiv.innerHTML = `
-                <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${count})</h3>
+                <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${categoryItems.length})</h3>
                 <div class="category-items" id="category-${escapeHtml(category)}"></div>
             `;
             container.appendChild(categoryDiv);
