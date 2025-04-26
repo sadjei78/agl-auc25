@@ -6,27 +6,15 @@ class Chat {
         this.isAdmin = false;
         this.currentChatUser = null;
         this.unreadCounts = {};
-        
-        // Initialize DOM elements
-        this.initializeElements();
-    }
-
-    initializeElements() {
-        this.chatMessages = document.getElementById('chat-messages');
-        this.chatInput = document.getElementById('chat-input');
-        this.sendButton = document.getElementById('send-message');
-        this.sessionButtons = document.querySelector('.session-buttons');
-
-        // Disable chat input initially for admins
-        if (this.chatInput && this.isAdmin) {
-            this.chatInput.disabled = true;
-            this.chatInput.placeholder = 'Select a user to start chatting...';
-        }
+        this.messageListener = null;
     }
 
     initialize(userEmail, isAdmin) {
         this.currentUser = userEmail;
         this.isAdmin = isAdmin;
+        
+        // Initialize elements after we know user type
+        this.initializeElements();
         
         // Initialize Firebase refs
         this.messagesRef = ref(database, 'messages');
@@ -37,6 +25,27 @@ class Chat {
             this.setupAdminChat();
         } else {
             this.setupUserChat();
+        }
+    }
+
+    initializeElements() {
+        this.chatMessages = document.getElementById('chat-messages');
+        this.chatInput = document.getElementById('chat-input');
+        this.sendButton = document.getElementById('send-message');
+        this.sessionButtons = document.querySelector('.session-buttons');
+
+        // Set initial state based on user type
+        if (this.chatInput) {
+            if (this.isAdmin) {
+                this.chatInput.disabled = true;
+                this.chatInput.placeholder = 'Select a user to start chatting...';
+            } else {
+                this.chatInput.disabled = false;
+                this.chatInput.placeholder = 'Type your message...';
+            }
+        }
+        if (this.sendButton) {
+            this.sendButton.disabled = this.isAdmin;
         }
     }
 
