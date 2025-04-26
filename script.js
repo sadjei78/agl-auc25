@@ -229,7 +229,6 @@ async function handleLoginSuccess(result, loginEmail) {
         // Setup admin features if admin
         if (result.adminType === 'admin') {
             initializeAdminTools();
-            initializeAdminChatSessions();
         }
 
         // Display admin badge
@@ -280,7 +279,6 @@ function checkSessionAndLoadView() {
         // Setup admin features if admin
         if (adminType === 'admin') {
             initializeAdminTools();
-            initializeAdminChatSessions();
         }
 
         // Display admin badge
