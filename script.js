@@ -208,7 +208,7 @@ function initializeAdminTools() {
 }
 
 function initializeAdminChatSessions() {
-    // Just start polling - it includes the initial load
+    // Remove loadActiveUsers call since it's included in startActiveSessionPolling
     startActiveSessionPolling();
 }
 
@@ -572,280 +572,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach the function to the window object
     window.addAuctionItem = addAuctionItem;
 
-    // Move this function outside DOMContentLoaded
-    window.loadAuctionItems = async function() {
-        try {
-            showSpinner();
-            const response = await fetch(`${scriptURL}?action=getCategoryCounts`);
-            const categoryCounts = await response.json();
-            
-            const container = document.getElementById('auction-items-container');
-            container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
-
-            // Sort categories alphabetically
-            const sortedCategories = Object.entries(categoryCounts)
-                .filter(([category]) => category !== 'true' && category !== 'false')
-                .sort(([a], [b]) => a.localeCompare(b));
-
-            // Create accordion for each category
-            sortedCategories.forEach(([category, count]) => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'accordion';
-                categoryDiv.innerHTML = `
-                    <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${count})</h3>
-                    <div class="category-items" id="category-${escapeHtml(category)}"></div>
-                `;
-                container.appendChild(categoryDiv);
-            });
-        } catch (error) {
-            console.error('Error loading auction items:', error);
-        } finally {
-            hideSpinner();
-        }
-    };
-
-    // Function to load items for a specific category (refresh data)
-    function loadItemsForCategory(category, catID) {
-        showSpinner();
-        fetch(`${scriptURL}?action=getAuctionItems&category=${encodeURIComponent(category)}`)
-            .then(response => response.json())
-            .then(filteredItems => {
-                // Debug log the entire items array
-                console.log('Category:', category);
-                console.log('Received Items:', filteredItems);
-                
-                filteredItems.forEach(item => {
-                    console.log('Individual Item Data:', {
-                        id: item.id,
-                        name: item.name,
-                        image1: item.image1,
-                        image2: item.image2,
-                        image3: item.image3,
-                        description: item.description,
-                        startingBid: item.startingBid,
-                        biddingActive: item.biddingActive,
-                        category: item.category
-                    });
-                });
-                
-                const contentDiv = document.querySelector(`.accordion-content[data-category="${category}"]`);
-                
-                if (!contentDiv) {
-                    console.error(`Could not find content div for category: ${category}`);
-                    return;
-                }
-                
-                contentDiv.innerHTML = '';
-                contentDiv.style.display = 'flex';
-                contentDiv.style.flexWrap = 'wrap';
-                contentDiv.style.gap = '20px';
-
-                filteredItems.forEach(item => {
-                    // Debug log for each item's images
-                    console.log('Item images:', {
-                        image1: item.image1,
-                        image2: item.image2,
-                        image3: item.image3
-                    });
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'auction-item';
-                    
-                    // Sanitize image URLs and ensure they're not undefined
-                    const image1 = item.image1 ? encodeURI(item.image1.trim()) : '';
-                    const image2 = item.image2 ? encodeURI(item.image2.trim()) : '';
-                    const image3 = item.image3 ? encodeURI(item.image3.trim()) : '';
-                    
-                    const startingBidDisplay = item.totBids === 0 ? `<p>Starting Bid: $${item.startingBid}</p>` : '';
-                    const currentBidDisplay = item.totBids > 0 ? `<p>Current Bid: $${item.highestBid}</p>` : '';
-
-                    // Sanitize strings for HTML insertion
-                    const sanitizedName = item.name ? item.name.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
-                    const sanitizedDesc = item.description ? item.description.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
-
-                    itemDiv.innerHTML = `
-                        <p class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
-                            ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
-                        </p>
-                        <h4>${sanitizedName}</h4>
-                        <img src="${image1}" alt="${sanitizedName}" class="thumbnail" 
-                            onclick="showLargeImage('${image1}', '${sanitizedName}', '${sanitizedDesc}', 
-                            ${item.totBids || 0}, ${item.highestBid || item.startingBid}, ${item.startingBid}, ${item.biddingActive}, 
-                            '${image2}', '${image3}', '${item.id}')"
-                            onerror="this.src='./images/AuctionDefault.png'">
-                        <p>${sanitizedDesc}</p>
-                        ${startingBidDisplay}
-                        ${currentBidDisplay}
-                        <p>Total Bids: ${item.totBids || 0}</p>
-                    `;
-
-                    // Create and append bid button
-                    const bidButton = createBidButton(item);
-                    itemDiv.appendChild(bidButton);
-                    contentDiv.appendChild(itemDiv);
-                });
-
-                // If no items match the criteria, display a message
-                if (filteredItems.length === 0) {
-                    contentDiv.innerHTML = '<p>No items available in this category.</p>';
-                }
-
-                // Only update category count if catID is provided
-                if (catID) {
-                    updateCategoryCount(catID);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching auction items:', error);
-                alert('There was an error refreshing the auction items. Please try again.');
-            })
-            .finally(() => hideSpinner());
-    }
-
-    // Function to update the category count
-    function updateCategoryCount(catID) {
-        const categoryHeader = document.querySelector(`#${catID}`);
-        
-        // Check if the categoryHeader exists
-        if (!categoryHeader) {
-            console.error(`Header with ID ${catID} not found.`);
-            return;
-        } 
-
-        const categoryContent = categoryHeader.nextElementSibling; // Get the next sibling element
-
-        // Check if the next sibling is found and is the correct element
-        if (!categoryContent || !categoryContent.classList.contains('accordion-content')) {
-            console.error('Next sibling is not found or is not an accordion-content element.');
-            return;
-        }
-
-        const categoryName = categoryContent.getAttribute('data-category'); // Get the data-category attribute
-
-        fetch(`${scriptURL}?action=getCategoryCounts`)
-            .then(response => response.json())
-            .then(categoryCounts => {
-                const count = categoryCounts[categoryName] || 0; // Get the count for the category
-                categoryHeader.innerText = `${categoryName} (${count})`; // Update the header with the new count
-            })
-            .catch(error => console.error('Error fetching category counts:', error));
-    }
-
-    // Add these functions at the top of your script
-    function saveUserSession(email, adminType, token) {
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('adminType', adminType || 'user');
-        if (token) {
-            localStorage.setItem('authToken', token);
-        }
-    }
-
-    function clearUserSession() {
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('adminType');
-        localStorage.removeItem('authToken');
-    }
-
-    function checkExistingSession() {
-        const savedEmail = localStorage.getItem('userEmail');
-        const savedAdminType = localStorage.getItem('adminType');
-        
-        if (savedEmail) {
-            userEmail = savedEmail;
-            welcomeMessage.textContent = `Welcome, ${userEmail}!`;
-            welcomeMessage.style.display = 'block';
-            
-            // Hide login/registration, show main content
-            loginSection.style.display = 'none';
-            registrationSection.style.display = 'none';
-            biddingSection.style.display = 'block';
-            auctionItemsSection.style.display = 'block';
-            chatSection.style.display = 'block';
-            
-            // Set admin status if applicable
-            if (savedAdminType && savedAdminType !== 'user') {
-                window.isAdmin = true;
-                adminType = savedAdminType;
-                displayAdminBadge(savedAdminType);
-                initializeAdminChatSessions();
-            }
-            
-            // Load auction items
-            loadAuctionItems();
-        }
-    }
-
-    // Add a logout function
-    function logout() {
-        // Stop any active polling
-        stopMessagePolling();
-        
-        // Clear user session
-        clearUserSession();
-        
-        // Hide sections that should only be visible when logged in
-        const sectionsToHide = [
-            'bidding',
-            'auction-items',
-            'chat',
-            'admin-badge',
-            'welcome-message',
-            'logout-button'  // Add this to hide the logout button
-        ];
-        
-        sectionsToHide.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.style.display = 'none';
-            }
-        });
-        
-        // Show login section
-        const loginSection = document.getElementById('login');
-        if (loginSection) {
-            loginSection.style.display = 'block';
-        }
-        
-        // Clear any open modals
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            modal.style.display = 'none';
-        });
-        
-        // Clear form inputs
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => form.reset());
-    }
-
-    // Check for existing session when page loads
-    checkExistingSession();
-
-    // Add logout button to header
-    const header = document.querySelector('header');
-    const logoutButton = document.createElement('button');
-    logoutButton.textContent = 'Logout';
-    logoutButton.onclick = logout;
-    logoutButton.className = 'logout-button';
-    logoutButton.id = 'logout-button';  // Add this line
-    header.appendChild(logoutButton);
-
-    // Keep only the event listeners
-    if (addItemModal) {
-        addItemModal.addEventListener('click', function(event) {
-            if (event.target === this) {
-                closeAddItemModal();
-            }
-        });
-    }
-
-    // Add back near the other event listeners at the bottom of DOMContentLoaded
-    if (itemForm) {
-        itemForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            addAuctionItem(e);
-        });
-    }
-
     // Add carousel navigation function
     window.changeImage = function(direction) {
         if (currentImages.length <= 1) return;
@@ -1021,22 +747,20 @@ async function loadActiveUsers() {
     }
 
     try {
-        const params = new URLSearchParams({
-            action: 'getActiveUsers',  // Changed from getChatMessages
-            email: email,
-            token: token
-        });
-
-        const response = await fetch(`${scriptURL}?${params}`);
+        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         
-        if (data.success && Array.isArray(data.users)) {  // Changed from activeUsers
-            displaySessionButtons(data.users);  // Pass users array
+        if (data.success && Array.isArray(data.activeUsers)) {
+            displaySessionButtons(data.activeUsers);
         } else {
             console.error('Invalid active users data:', data);
         }
     } catch (error) {
         console.error('Error loading active users:', error);
+        // Don't throw the error, just log it to prevent breaking the polling
     }
 }
 
@@ -1383,9 +1107,17 @@ function startActiveSessionPolling() {
     // Clear any existing polling
     stopActiveSessionPolling();
     
-    // Start new polling
-    loadActiveUsers(); // Initial load
-    activeSessionPollingInterval = setInterval(loadActiveUsers, SESSION_POLLING_INTERVAL);
+    // Start new polling with a slight delay to ensure chat is fully initialized
+    setTimeout(() => {
+        loadActiveUsers(); // Initial load
+        activeSessionPollingInterval = setInterval(() => {
+            if (localStorage.getItem('sessionToken')) {  // Only poll if logged in
+                loadActiveUsers();
+            } else {
+                stopActiveSessionPolling();  // Stop polling if not logged in
+            }
+        }, SESSION_POLLING_INTERVAL);
+    }, 1000);
 }
 
 function stopActiveSessionPolling() {
@@ -1579,4 +1311,36 @@ function displayItemsInCategory(category, items) {
         categoryContainer.appendChild(itemElement);
     });
 }
+
+// Move this function outside DOMContentLoaded
+window.loadAuctionItems = async function() {
+    try {
+        showSpinner();
+        const response = await fetch(`${scriptURL}?action=getCategoryCounts`);
+        const categoryCounts = await response.json();
+        
+        const container = document.getElementById('auction-items-container');
+        container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
+
+        // Sort categories alphabetically
+        const sortedCategories = Object.entries(categoryCounts)
+            .filter(([category]) => category !== 'true' && category !== 'false')
+            .sort(([a], [b]) => a.localeCompare(b));
+
+        // Create accordion for each category
+        sortedCategories.forEach(([category, count]) => {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'accordion';
+            categoryDiv.innerHTML = `
+                <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${count})</h3>
+                <div class="category-items" id="category-${escapeHtml(category)}"></div>
+            `;
+            container.appendChild(categoryDiv);
+        });
+    } catch (error) {
+        console.error('Error loading auction items:', error);
+    } finally {
+        hideSpinner();
+    }
+};
 
