@@ -1529,7 +1529,7 @@ function displayAuctionItems(items) {
         const primaryImage = images[0] || 'placeholder-image-url.jpg';
 
         const itemElement = document.createElement('div');
-        itemElement.className = 'auction-item';
+        itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
         itemElement.innerHTML = `
             <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
                 ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}

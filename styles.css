@@ -31,42 +31,54 @@ header {
     text-align: center;
     width: 250px;
     position: relative;
-    padding-top: 30px;
+    padding-top: 40px;    /* Keep space for the status banner */
     display: flex;
     flex-direction: column;
     align-items: center;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+    overflow: hidden;     /* Ensure status doesn't overflow */
+}
+
+.auction-item.closed {
+    background-color: #f5f5f5;
+    opacity: 0.8;
+}
+
+
+.closed-message {
+    color: #666;
+    font-style: italic;
+    margin: 10px 0;
+}
+
+.bidding-status {
+    padding: 5px 10px;
+    text-align: center;
+    width: calc(100% + 30px);  /* Account for parent padding */
+    margin: 0;
+    position: absolute;
+    top: 0;
+    left: -15px;         /* Offset parent padding */
+    right: -15px;
+}
+
+.bidding-status.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.bidding-status.inactive {
+    background-color: #f44336;
+    color: white;
 }
 
 .item {
     border: 1px solid #ccc;
     padding: 10px;
     text-align: center;
-}
-
-.bidding-status {
-    display: block;
-    padding: 4px 8px;
-    font-weight: bold;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-}
-
-.bidding-status.active {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    border-bottom: 1px solid var(--text-color);
-}
-
-.bidding-status.inactive {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    border-bottom: 1px solid var(--text-color);
 }
 
 .admin-type-label {
@@ -225,6 +237,11 @@ button {
 
 button:hover {
     background-color: #e0e0e0;
+}
+
+/* for disabled buttons, make them gray */
+button:disabled {
+    display: none;
 }
 
 /* Primary action buttons (like Add Item, Place Bid) */
