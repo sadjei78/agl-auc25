@@ -7,7 +7,7 @@ class Chat {
         this.currentChatUser = null;
         this.unreadCounts = {};
         
-        // Wait for DOM elements
+        // Initialize DOM elements
         this.initializeElements();
     }
 
@@ -17,105 +17,42 @@ class Chat {
         this.sendButton = document.getElementById('send-message');
         this.sessionButtons = document.querySelector('.session-buttons');
 
-        // Clear any existing messages and show welcome message
-        if (this.chatMessages) {
-            this.chatMessages.innerHTML = `
-                <div class="chat-message system-message">
-                    Welcome to the chat system. Please wait while we connect you...
-                </div>
-            `;
+        // Disable chat input initially for admins
+        if (this.chatInput && this.isAdmin) {
+            this.chatInput.disabled = true;
+            this.chatInput.placeholder = 'Select a user to start chatting...';
         }
     }
 
     initialize(userEmail, isAdmin) {
-        if (!userEmail) {
-            console.error('No user email provided for chat initialization');
-            return;
-        }
-
         this.currentUser = userEmail;
         this.isAdmin = isAdmin;
-
+        
         // Initialize Firebase refs
         this.messagesRef = ref(database, 'messages');
         this.activeUsersRef = ref(database, 'activeUsers');
-        this.typingRef = ref(database, 'typing');
 
-        // Update chat window with user info
-        if (this.chatMessages) {
-            this.chatMessages.innerHTML = `
-                <div class="chat-message system-message">
-                    Connected as ${this.currentUser}
-                    ${this.isAdmin ? '(Admin)' : ''}
-                </div>
-            `;
-        }
-
-        // Setup message input handlers
-        this.setupMessageHandlers();
-
-        if (this.isAdmin) {
+        // Setup appropriate chat interface
+        if (isAdmin) {
             this.setupAdminChat();
         } else {
             this.setupUserChat();
         }
-
-        // Setup notifications
-        if (!this.isAdmin) {
-            this.setupNotifications();
-            Notification.requestPermission();
-        }
-
-        // Hide session buttons for non-admins
-        const sessionButtonsContainer = document.querySelector('.session-buttons');
-        if (sessionButtonsContainer) {
-            sessionButtonsContainer.style.display = this.isAdmin ? 'flex' : 'none';
-        }
-
-        // Initialize Firebase chat
-        const chatRef = ref(database, 'chats');
-        const messagesRef = child(chatRef, this.sanitizeEmailForPath(userEmail));
-
-        // Remove any existing listeners before adding new ones
-        onValue(messagesRef, (snapshot) => {
-            this.displayMessages(snapshot.val() || {});
-        });
-
-        // Set up message input
-        this.setupMessageInput(messagesRef, userEmail);
-
-        // Setup typing indicator after Firebase is initialized
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                this.setupTypingIndicator();
-            }
-        });
-    }
-
-    setupMessageHandlers() {
-        this.sendButton?.addEventListener('click', () => this.sendMessage());
-        this.chatInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
     }
 
     setupAdminChat() {
         if (!this.isAdmin) return;
 
-        // Enable chat input for admins
+        // Disable chat input until session is selected
         if (this.chatInput) {
-            this.chatInput.disabled = false;
+            this.chatInput.disabled = true;
             this.chatInput.placeholder = 'Select a user to start chatting...';
         }
-        if (this.sendButton) this.sendButton.disabled = false;
+        if (this.sendButton) this.sendButton.disabled = true;
 
         // Show admin sessions
-        const adminSessions = document.getElementById('admin-sessions');
-        if (adminSessions) {
-            adminSessions.style.display = 'block';
+        if (this.sessionButtons) {
+            this.sessionButtons.style.display = 'flex';
         }
 
         // Listen for active users
@@ -145,46 +82,53 @@ class Chat {
     }
 
     updateSessionButtons(users) {
-        if (!this.sessionButtons) {
-            console.error('Session buttons container not found');
-            return;
-        }
+        if (!this.sessionButtons) return;
         
-        console.log('Updating session buttons with users:', users); // Debug log
-        
-        this.sessionButtons.innerHTML = Object.values(users)
-            .filter(user => user && user.email) // Filter out any invalid entries
-            .map(user => `
-                <button class="session-button" data-user="${user.email}">
-                    ${user.email}
-                </button>
-            `).join('');
-
-        // Add click handlers
-        this.sessionButtons.querySelectorAll('.session-button').forEach(button => {
-            button.addEventListener('click', () => {
-                this.selectSession(button.dataset.user);
-                // Update active state
-                this.sessionButtons.querySelectorAll('.session-button').forEach(b => 
-                    b.classList.toggle('active', b === button));
-            });
+        this.sessionButtons.innerHTML = '';
+        Object.values(users).forEach(user => {
+            const button = document.createElement('button');
+            button.className = 'session-button';
+            button.textContent = user.email;
+            
+            // Add unread count if any
+            const unreadCount = this.unreadCounts[user.email] || 0;
+            if (unreadCount > 0) {
+                button.innerHTML += `<span class="unread-count">${unreadCount}</span>`;
+            }
+            
+            button.onclick = () => this.selectChatSession(user.email);
+            this.sessionButtons.appendChild(button);
         });
     }
 
-    selectSession(userEmail) {
-        // Sanitize email for path
+    selectChatSession(userEmail) {
         this.currentChatUser = userEmail;
-        const safeEmail = this.sanitizeEmailForPath(userEmail);
         
+        // Enable chat input
         if (this.chatInput) {
             this.chatInput.disabled = false;
-            this.chatInput.focus();
+            this.chatInput.placeholder = `Chatting with ${userEmail}...`;
         }
         if (this.sendButton) this.sendButton.disabled = false;
+
+        // Load chat history
+        this.loadChatHistory(userEmail);
         
-        // Clear and reload messages
-        if (this.chatMessages) this.chatMessages.innerHTML = '';
-        this.listenForMessages();
+        // Highlight selected session
+        const buttons = this.sessionButtons.getElementsByClassName('session-button');
+        Array.from(buttons).forEach(button => {
+            button.classList.toggle('active', button.textContent === userEmail);
+        });
+    }
+
+    async loadChatHistory(userEmail) {
+        const safeEmail = this.sanitizeEmailForPath(userEmail);
+        const chatRef = child(this.messagesRef, safeEmail);
+        
+        onValue(chatRef, (snapshot) => {
+            const messages = snapshot.val() || {};
+            this.displayMessages(messages);
+        });
     }
 
     async sendMessage() {
@@ -194,32 +138,29 @@ class Chat {
         const timestamp = Date.now();
 
         try {
+            // Create message path based on recipient
+            const chatPath = this.isAdmin 
+                ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
+                : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
+
             // Create a new message reference
-            const newMessageRef = push(this.messagesRef);
+            const newMessageRef = push(ref(database, chatPath));
             
             // Set the message data
-            set(newMessageRef, {
+            await set(newMessageRef, {
                 sender: this.currentUser,
                 message: message,
                 timestamp: timestamp,
                 isAdmin: this.isAdmin,
-                recipient: this.currentChatUser || 'admin' // If not admin, send to admin
+                recipient: this.isAdmin ? this.currentChatUser : 'admin',
+                read: false
             });
 
             // Clear input after sending
             this.chatInput.value = '';
             
-            // Add message to display
-            this.displayMessage({
-                sender: this.currentUser,
-                message: message,
-                timestamp: timestamp,
-                isAdmin: this.isAdmin
-            });
-
         } catch (error) {
             console.error('Error sending message:', error);
-            // Show error to user
             this.displayMessage({
                 message: 'Error sending message. Please try again.',
                 isError: true
@@ -430,5 +371,5 @@ class Chat {
     }
 }
 
-// Create chat instance after the module is loaded
+// Create chat instance
 export const chat = new Chat(); 
