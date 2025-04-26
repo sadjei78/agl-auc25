@@ -212,7 +212,7 @@ function initializeAdminChatSessions() {
     loadActiveUsers();
 }
 
-// Keep the admin feature calls in handleLoginSuccess
+// Update chat initialization in handleLoginSuccess
 async function handleLoginSuccess(result, loginEmail) {
     try {
         // Store user data in localStorage
@@ -228,8 +228,8 @@ async function handleLoginSuccess(result, loginEmail) {
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
 
-        // Initialize chat
-        chat.initialize(loginEmail.value, result.adminType === 'admin');
+        // Initialize chat first, before any other operations
+        await chat.initialize(loginEmail.value, result.adminType === 'admin');
 
         // Setup admin features if admin
         if (result.adminType === 'admin') {
@@ -572,57 +572,61 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach the function to the window object
     window.addAuctionItem = addAuctionItem;
 
-    function loadAuctionItems() {
+    // Move this function outside DOMContentLoaded
+    window.loadAuctionItems = async function() {
         showSpinner();
-        fetch(scriptURL + '?action=getCategoryCounts')
-            .then(response => response.json())
-            .then(categoryCounts => {
-                console.log('Category Counts:', categoryCounts);
-                const container = document.getElementById('auction-items-container');
-                container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
+        try {
+            const response = await fetch(scriptURL + '?action=getCategoryCounts');
+            const categoryCounts = await response.json();
+            console.log('Category Counts:', categoryCounts);
+            
+            const container = document.getElementById('auction-items-container');
+            container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
 
-                // Sort categories alphabetically
-                const sortedCategories = Object.entries(categoryCounts)
-                    .filter(([category]) => category !== 'true' && category !== 'false') // Filter out true/false
-                    .sort(([a], [b]) => a.localeCompare(b));
+            // Sort categories alphabetically
+            const sortedCategories = Object.entries(categoryCounts)
+                .filter(([category]) => category !== 'true' && category !== 'false')
+                .sort(([a], [b]) => a.localeCompare(b));
 
-                // Create accordion for each category
-                sortedCategories.forEach(([category, count]) => {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'accordion';
+            // Create accordion for each category
+            sortedCategories.forEach(([category, count]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'accordion';
 
-                    const header = document.createElement('h3');
-                    header.innerText = `${category} (${count})`; // Display item count
-                    header.id = `header-${category.replace(/\s+/g, '-').toLowerCase()}`; // Assign a unique ID
-                    header.onclick = () => {
-                        const content = categoryDiv.querySelector('.accordion-content');
-                        const isExpanded = content.style.display === 'block';
-                        // Collapse all other sections
-                        document.querySelectorAll('.accordion-content').forEach(c => c.style.display = 'none');
-                        // Load items for the clicked category
-                        loadItemsForCategory(category, header.id);
-                        // Toggle the clicked category
-                        content.style.display = isExpanded ? 'none' : 'flex';
-                    };
+                const header = document.createElement('h3');
+                header.innerText = `${category} (${count})`; // Display item count
+                header.id = `header-${category.replace(/\s+/g, '-').toLowerCase()}`; // Assign a unique ID
+                header.onclick = () => {
+                    const content = categoryDiv.querySelector('.accordion-content');
+                    const isExpanded = content.style.display === 'block';
+                    // Collapse all other sections
+                    document.querySelectorAll('.accordion-content').forEach(c => c.style.display = 'none');
+                    // Load items for the clicked category
+                    loadItemsForCategory(category, header.id);
+                    // Toggle the clicked category
+                    content.style.display = isExpanded ? 'none' : 'flex';
+                };
 
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'accordion-content';
-                    contentDiv.setAttribute('data-category', category);
-                    contentDiv.style.display = 'none'; // Initially collapsed
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'accordion-content';
+                contentDiv.setAttribute('data-category', category);
+                contentDiv.style.display = 'none'; // Initially collapsed
 
-                    categoryDiv.appendChild(header);
-                    categoryDiv.appendChild(contentDiv);
-                    container.appendChild(categoryDiv);
-                });
+                categoryDiv.appendChild(header);
+                categoryDiv.appendChild(contentDiv);
+                container.appendChild(categoryDiv);
+            });
 
-                // If no categories match the criteria, display a message
-                if (sortedCategories.length === 0) {
-                    container.innerHTML = '<p>No auction items available.</p>';
-                }
-            })
-            .catch(error => console.error('Error fetching category counts:', error))
-            .finally(() => hideSpinner());
-    }
+            // If no categories match the criteria, display a message
+            if (sortedCategories.length === 0) {
+                container.innerHTML = '<p>No auction items available.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading auction items:', error);
+        } finally {
+            hideSpinner();
+        }
+    };
 
     // Function to load items for a specific category (refresh data)
     function loadItemsForCategory(category, catID) {
