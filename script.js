@@ -198,18 +198,15 @@ window.insertItemDetails = function(itemName, currentBid, totalBids, isActive) {
     }
 };
 
-// Add this function to handle login success
-async function handleLoginSuccess(user) {
+// Update the login success handler
+async function handleLoginSuccess(result, loginEmail) {
     try {
-        // Check if user is admin
-        const adminRef = ref(database, `admins/${user.uid}`);
-        const adminSnapshot = await get(adminRef);
-        const isAdmin = adminSnapshot.exists();
-
-        // Store user info
-        localStorage.setItem('adminType', isAdmin ? 'admin' : 'user');
-        localStorage.setItem('userEmail', user.email);
-        localStorage.setItem('sessionToken', user.accessToken);
+        // Store session info and user details
+        localStorage.setItem('sessionToken', result.token);
+        localStorage.setItem('userEmail', loginEmail.value);
+        localStorage.setItem('firstName', result.firstName);
+        localStorage.setItem('lastName', result.lastName);
+        localStorage.setItem('adminType', result.adminType || 'user');
 
         // Update UI
         document.getElementById('login').style.display = 'none';
@@ -217,17 +214,17 @@ async function handleLoginSuccess(user) {
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
 
-        // Initialize chat
-        chat.initialize(user.email, isAdmin);
+        // Initialize chat with admin status from result
+        chat.initialize(loginEmail.value, result.adminType === 'admin');
 
-        // Initialize admin features if admin
-        if (isAdmin) {
+        // Display admin badge if applicable
+        displayAdminBadge(result.adminType);
+        
+        // Initialize admin tools if admin
+        if (result.adminType !== 'user') {
             initializeAdminTools();
             initializeAdminChatSessions();
         }
-
-        // Display admin badge
-        displayAdminBadge(isAdmin ? 'admin' : 'user');
 
         // Load auction items
         await loadAuctionItems();
@@ -236,6 +233,56 @@ async function handleLoginSuccess(user) {
         console.error('Error in handleLoginSuccess:', error);
     }
 }
+
+// Update the login form submission handler
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showSpinner();
+    
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
+    
+    if (!loginEmail || !loginPassword) {
+        console.error('Login form elements not found');
+        hideSpinner();
+        return;
+    }
+
+    try {
+        // Hash the password before sending
+        const hashedPassword = btoa(loginPassword.value);
+        const params = new URLSearchParams({
+            action: 'loginUser',
+            email: loginEmail.value,
+            password: hashedPassword
+        });
+
+        const response = await fetch(`${scriptURL}?${params.toString()}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+
+        if (result.success) {
+            handleLoginSuccess(result, loginEmail);
+            if (loginError) loginError.style.display = 'none';
+        } else {
+            if (loginError) {
+                loginError.textContent = result.message || 'Invalid email or password';
+                loginError.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        if (loginError) {
+            loginError.textContent = 'An error occurred during login';
+            loginError.style.display = 'block';
+        }
+    } finally {
+        hideSpinner();
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     // Remove these lines since they're duplicated
@@ -288,9 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (result.success) {
-                handleLoginSuccess(result.user);
+                handleLoginSuccess(result, loginEmail);
                 if (loginError) loginError.style.display = 'none';
-                await loadAuctionItems(); // Load items after successful login
             } else {
                 if (loginError) {
                     loginError.textContent = result.message || 'Invalid email or password';
