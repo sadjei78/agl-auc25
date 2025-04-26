@@ -1,23 +1,15 @@
-import { auth, database, ref, set } from './firebase-config.js';
-import { onValue, push, get, child } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+import { auth, database, ref, set, onValue, push, get, child } from './firebase-config.js';
 
 class Chat {
     constructor() {
+        // Don't initialize Firebase refs in constructor
         this.currentUser = null;
         this.isAdmin = false;
         this.currentChatUser = null;
-        this.messagesRef = ref(database, 'messages');
-        this.activeUsersRef = ref(database, 'activeUsers');
-        this.typingRef = ref(database, 'typing');
         this.unreadCounts = {};
-        this.initializeElements();
         
-        // Wait for auth state before setting up typing indicator
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                this.setupTypingIndicator();
-            }
-        });
+        // Wait for DOM elements
+        this.initializeElements();
     }
 
     initializeElements() {
@@ -30,6 +22,11 @@ class Chat {
     initialize(userEmail, isAdmin) {
         this.currentUser = userEmail;
         this.isAdmin = isAdmin;
+
+        // Initialize Firebase refs here instead of constructor
+        this.messagesRef = ref(database, 'messages');
+        this.activeUsersRef = ref(database, 'activeUsers');
+        this.typingRef = ref(database, 'typing');
 
         // Setup message input handlers
         this.setupMessageHandlers();
@@ -54,7 +51,7 @@ class Chat {
 
         // Initialize Firebase chat
         const chatRef = ref(database, 'chats');
-        const messagesRef = child(chatRef, userEmail.replace(/[.#$[\]]/g, '_'));
+        const messagesRef = child(chatRef, this.sanitizeEmailForPath(userEmail));
 
         // Remove any existing listeners before adding new ones
         onValue(messagesRef, (snapshot) => {
@@ -63,6 +60,13 @@ class Chat {
 
         // Set up message input
         this.setupMessageInput(messagesRef, userEmail);
+
+        // Setup typing indicator after Firebase is initialized
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                this.setupTypingIndicator();
+            }
+        });
     }
 
     setupMessageHandlers() {
@@ -424,4 +428,5 @@ class Chat {
     }
 }
 
+// Create chat instance after the module is loaded
 export const chat = new Chat(); 

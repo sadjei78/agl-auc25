@@ -1,5 +1,6 @@
 import { config } from './config.js';
 import { chat } from './chat.js';
+import { auth, database, ref, get, set } from './firebase-config.js';
 // import { initializeRestreamChat, disconnectRestreamChat } from './restream-chat.js';
 
 // Move scriptURL to global scope
@@ -1552,39 +1553,33 @@ function displayAuctionItems(items) {
 }
 
 // Update initializeAdminChatSessions to use Firebase
-function initializeAdminChatSessions() {
-    const email = localStorage.getItem('userEmail');
-    const adminType = localStorage.getItem('adminType');
+async function initializeAdminChatSessions() {
+    try {
+        // Check if user is admin
+        const adminRef = ref(database, `admins/${auth.currentUser.uid}`);
+        const adminSnapshot = await get(adminRef);
+        const isAdmin = adminSnapshot.exists();
 
-    if (!email || adminType === 'user') {
-        return;
-    }
-
-    // Reference to active chat sessions in Firebase
-    const sessionsRef = firebase.database().ref('chat_sessions');
-    
-    // Listen for active chat sessions
-    sessionsRef.on('value', (snapshot) => {
-        const sessions = snapshot.val() || {};
-        const sessionButtons = document.querySelector('.session-buttons');
-        
-        if (sessionButtons) {
-            const sessionElements = Object.entries(sessions).map(([sessionId, session]) => {
-                // Skip admin's own sessions
-                if (session.userEmail === email) return '';
-                
-                return `
-                    <button class="session-button" 
-                            onclick="selectChatSession('${escapeHtml(session.userEmail)}')">
-                        ${escapeHtml(session.userName || session.userEmail)}
-                        <span class="unread-count" style="display: none;">0</span>
-                    </button>
-                `;
-            }).filter(Boolean); // Remove empty strings
-
-            sessionButtons.innerHTML = sessionElements.join('') || '<p>No active chat sessions</p>';
+        if (isAdmin) {
+            console.log('Initializing admin chat sessions');
+            // Initialize chat with admin privileges
+            chat.initialize(localStorage.getItem('userEmail'), true);
+            
+            // Show admin badge
+            const adminBadge = document.getElementById('admin-badge');
+            if (adminBadge) {
+                adminBadge.style.display = 'block';
+            }
+        } else {
+            console.log('User is not an admin');
+            // Initialize regular user chat
+            chat.initialize(localStorage.getItem('userEmail'), false);
         }
-    });
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        // Initialize as regular user if there's an error
+        chat.initialize(localStorage.getItem('userEmail'), false);
+    }
 }
 
 // Keep only essential error logging
