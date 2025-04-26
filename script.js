@@ -1765,7 +1765,7 @@ function displayWelcomePage() {
                 <h2>Ready to Start?</h2>
                 <p>Click below to view available items and start bidding!</p>
                 
-                <button class="primary-button" onclick="loadAuctionItems()">
+                <button class="primary-button" onclick="window.location.reload()">
                     View Auction Items
                 </button>
             </div>
