@@ -252,6 +252,42 @@ async function loadInitialCategories() {
     }
 }
 
+// Add this function to check session and load appropriate view
+function checkSessionAndLoadView() {
+    const token = localStorage.getItem('sessionToken');
+    const userEmail = localStorage.getItem('userEmail');
+    const adminType = localStorage.getItem('adminType');
+
+    if (token && userEmail) {
+        // User is logged in
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('registration').style.display = 'none';
+        document.getElementById('auction-items').style.display = 'block';
+        document.getElementById('chat').style.display = 'block';
+
+        // Initialize chat
+        chat.initialize(userEmail, adminType === 'admin');
+
+        // Setup admin features if admin
+        if (adminType === 'admin') {
+            initializeAdminTools();
+            initializeAdminChatSessions();
+        }
+
+        // Display admin badge
+        displayAdminBadge(adminType);
+
+        // Load auction items
+        loadAuctionItems();
+    } else {
+        // No valid session, show login
+        document.getElementById('login').style.display = 'block';
+        document.getElementById('registration').style.display = 'none';
+        document.getElementById('auction-items').style.display = 'none';
+        document.getElementById('chat').style.display = 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Get all necessary DOM elements first
     const loginSection = document.getElementById('login');
@@ -287,6 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (auctionItemsSection) auctionItemsSection.style.display = 'none';
     if (chatSection) chatSection.style.display = 'none';
     if (adminBadge) adminBadge.style.display = 'none';
+
+    // Check session and load appropriate view
+    checkSessionAndLoadView();
 
     // Handle login form submission
     loginForm.addEventListener('submit', async (e) => {
