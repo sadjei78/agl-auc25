@@ -1,4 +1,6 @@
 import { auth, database, ref, set, onValue, push, get, child } from './firebase-config.js';
+import { config } from './config.js';
+const scriptURL = config.scriptURL;
 
 class Chat {
     constructor() {
