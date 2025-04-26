@@ -214,17 +214,25 @@ async function handleLoginSuccess(result, loginEmail) {
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
 
+        // Wait for Firebase to be ready
+        await new Promise(resolve => {
+            const unsubscribe = auth.onAuthStateChanged(user => {
+                unsubscribe();
+                resolve();
+            });
+        });
+
         // Initialize chat with admin status from result
         chat.initialize(loginEmail.value, result.adminType === 'admin');
 
-        // Display admin badge if applicable
-        displayAdminBadge(result.adminType);
-        
-        // Initialize admin tools if admin
-        if (result.adminType !== 'user') {
+        // Initialize admin features if admin
+        if (result.adminType === 'admin') {
             initializeAdminTools();
             initializeAdminChatSessions();
         }
+
+        // Display admin badge
+        displayAdminBadge(result.adminType);
 
         // Load auction items
         await loadAuctionItems();
