@@ -1217,104 +1217,140 @@ function displayCategories(items) {
     });
 }
 
-// Add function to load items for a specific category
-window.loadItemsForCategory = async function(category) {
-    try {
-        showSpinner();
-        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const items = await response.json();
-        
-        if (Array.isArray(items)) {
-            const categoryItems = items.filter(item => 
-                ((item.category && item.category.trim()) || 'Uncategorized') === category
-            );
-            displayItemsInCategory(category, categoryItems);
-        }
-    } catch (error) {
-        console.error('Error loading category items:', error);
-    } finally {
-        hideSpinner();
-    }
-}
-
-// Add this function to display items in a specific category
-function displayItemsInCategory(category, items) {
-    const categoryContainer = document.getElementById(`category-${escapeHtml(category)}`);
-    if (!categoryContainer) {
-        console.error(`Category container for ${category} not found`);
-        return;
-    }
-
-    categoryContainer.innerHTML = '';
-    items.forEach(item => {
-        const itemElement = document.createElement('div');
-        itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
-        
-        const images = [item.image1, item.image2, item.image3].filter(img => img);
-        const primaryImage = images[0] || './images/AuctionDefault.png';
-
-        itemElement.innerHTML = `
-            <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
-                ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
-            </div>
-            <img src="${primaryImage}" 
-                 alt="${escapeHtml(item.name)}" 
-                 class="thumbnail" 
-                 onerror="this.src='./images/AuctionDefault.png'"
-                 onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
-            <h3>${escapeHtml(item.name)}</h3>
-            <p>Current Bid: $${item.highestBid || item.startingBid}</p>
-            <p>Total Bids: ${item.totBids || 0}</p>
-            ${item.biddingActive ? `
-                <button onclick="openBidModal('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.id})">
-                    Place Bid
-                </button>
-            ` : ''}
-        `;
-        
-        categoryContainer.appendChild(itemElement);
-    });
-}
-
-// Update loadAuctionItems to properly display categories and items
+// Consolidate into one clear category handling function
 window.loadAuctionItems = async function() {
     try {
         showSpinner();
         const response = await fetch(`${scriptURL}?action=getAuctionItems`);
         const items = await response.json();
         
+        if (!Array.isArray(items)) {
+            throw new Error('Invalid items data received');
+        }
+
         const container = document.getElementById('auction-items-container');
+        if (!container) {
+            throw new Error('Auction container not found');
+        }
+
         container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
 
-        // Group items by category and count them
-        const categoryGroups = {};
-        items.forEach(item => {
-            const category = (item.category && item.category.trim()) || 'Uncategorized';
-            if (!categoryGroups[category]) {
-                categoryGroups[category] = [];
-            }
-            categoryGroups[category].push(item);
-        });
-
-        // Sort categories alphabetically
+        // Group and sort items
+        const categoryGroups = groupItemsByCategory(items);
         const sortedCategories = Object.entries(categoryGroups)
             .sort(([a], [b]) => a.localeCompare(b));
 
-        // Create accordion for each category
+        // Create category sections
         sortedCategories.forEach(([category, categoryItems]) => {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'accordion';
-            categoryDiv.innerHTML = `
-                <h3 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)} (${categoryItems.length})</h3>
-                <div class="category-items" id="category-${escapeHtml(category)}"></div>
-            `;
-            container.appendChild(categoryDiv);
+            createCategorySection(container, category, categoryItems);
         });
+
     } catch (error) {
         console.error('Error loading auction items:', error);
+        showErrorMessage('Failed to load auction items. Please try again.');
     } finally {
         hideSpinner();
+    }
+};
+
+// Helper functions for better organization
+function groupItemsByCategory(items) {
+    const groups = {};
+    items.forEach(item => {
+        const category = (item.category && item.category.trim()) || 'Uncategorized';
+        if (!groups[category]) {
+            groups[category] = [];
+        }
+        groups[category].push(item);
+    });
+    return groups;
+}
+
+function createCategorySection(container, category, items) {
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'accordion';
+
+    const header = document.createElement('h3');
+    const headerText = document.createTextNode(`${category} (${items.length})`);
+    header.appendChild(headerText);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'category-items';
+    contentDiv.id = `category-${escapeHtml(category)}`;
+    contentDiv.style.display = 'none';
+
+    // Add loading indicator
+    const loadingSpinner = document.createElement('div');
+    loadingSpinner.className = 'category-loading';
+    loadingSpinner.style.display = 'none';
+    contentDiv.appendChild(loadingSpinner);
+
+    // Improved click handler
+    header.addEventListener('click', async () => {
+        const isExpanded = contentDiv.style.display === 'block';
+        
+        // Collapse all other sections
+        document.querySelectorAll('.category-items').forEach(c => {
+            if (c !== contentDiv) c.style.display = 'none';
+        });
+        
+        // Toggle this section
+        contentDiv.style.display = isExpanded ? 'none' : 'block';
+        
+        // Load items if expanding
+        if (!isExpanded) {
+            loadingSpinner.style.display = 'block';
+            try {
+                await loadItemsForCategory(category);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+    });
+
+    categoryDiv.appendChild(header);
+    categoryDiv.appendChild(contentDiv);
+    container.appendChild(categoryDiv);
+}
+
+// Update loadItemsForCategory with better error handling
+window.loadItemsForCategory = async function(category) {
+    if (!category) {
+        console.error('Category parameter is required');
+        return;
+    }
+
+    const categoryContainer = document.getElementById(`category-${escapeHtml(category)}`);
+    if (!categoryContainer) {
+        console.error(`Category container for ${category} not found`);
+        return;
+    }
+
+    try {
+        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const items = await response.json();
+        if (!Array.isArray(items)) {
+            throw new Error('Invalid items data received');
+        }
+
+        const categoryItems = items.filter(item => 
+            ((item.category && item.category.trim()) || 'Uncategorized') === category
+        );
+
+        if (categoryItems.length === 0) {
+            categoryContainer.innerHTML = '<p class="no-items">No items available in this category</p>';
+            return;
+        }
+
+        displayItemsInCategory(category, categoryItems);
+
+    } catch (error) {
+        console.error('Error loading category items:', error);
+        categoryContainer.innerHTML = '<p class="error-message">Failed to load items. Please try again.</p>';
     }
 };
 
