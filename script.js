@@ -1402,7 +1402,20 @@ function displayAuctionItems(items) {
     const container = document.getElementById('auction-items-container');
     container.innerHTML = '';
 
+    // Create category containers
+    const categoryContainers = {};
     items.forEach(item => {
+        const category = item.category || 'Uncategorized';
+        if (!categoryContainers[category]) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category-section';
+            categoryDiv.innerHTML = `<h2>${escapeHtml(category)}</h2>`;
+            categoryContainers[category] = document.createElement('div');
+            categoryContainers[category].className = 'category-items';
+            categoryDiv.appendChild(categoryContainers[category]);
+            container.appendChild(categoryDiv);
+        }
+
         const images = [item.image1, item.image2, item.image3].filter(img => img);
         const primaryImage = images[0] || 'placeholder-image-url.jpg';
 
@@ -1426,7 +1439,7 @@ function displayAuctionItems(items) {
                 </button>
             ` : ''}
         `;
-        container.appendChild(itemElement);
+        categoryContainers[category].appendChild(itemElement);
     });
 }
 
