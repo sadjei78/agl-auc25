@@ -206,21 +206,31 @@ async function handleLoginSuccess(user) {
         const adminSnapshot = await get(adminRef);
         const isAdmin = adminSnapshot.exists();
 
-        // Store admin status
+        // Store user info
         localStorage.setItem('adminType', isAdmin ? 'admin' : 'user');
         localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('sessionToken', user.accessToken);
 
-        // Initialize chat and admin tools
+        // Update UI
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('registration').style.display = 'none';
+        document.getElementById('auction-items').style.display = 'block';
+        document.getElementById('chat').style.display = 'block';
+
+        // Initialize chat
         chat.initialize(user.email, isAdmin);
-        initializeAdminTools();
 
-        // Update UI elements
-        displayAdminBadge(isAdmin ? 'admin' : 'user');
-        
-        // Initialize admin chat sessions if needed
+        // Initialize admin features if admin
         if (isAdmin) {
+            initializeAdminTools();
             initializeAdminChatSessions();
         }
+
+        // Display admin badge
+        displayAdminBadge(isAdmin ? 'admin' : 'user');
+
+        // Load auction items
+        await loadAuctionItems();
 
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
@@ -1569,36 +1579,40 @@ window.handleItemSearch = function() {
 
 // Add this function back if it was removed
 function initializeAdminTools() {
-    if (localStorage.getItem('adminType') === 'user') {
+    // Check if user is admin
+    const adminType = localStorage.getItem('adminType');
+    if (adminType === 'user' || !adminType) {
         return;
     }
 
+    // Show admin elements
+    const adminBadge = document.getElementById('admin-badge');
+    const sessionButtons = document.querySelector('.session-buttons');
+    const adminTools = document.getElementById('admin-tools');
+    
+    if (adminBadge) adminBadge.style.display = 'block';
+    if (sessionButtons) sessionButtons.style.display = 'flex';
+    if (adminTools) adminTools.style.display = 'block';
+
+    // Setup search functionality
     const searchInput = document.getElementById('item-search');
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase();
             
-            // Clear the previous timeout
             if (searchTimeout) {
                 clearTimeout(searchTimeout);
             }
 
-            // Set a new timeout to prevent too many searches while typing
             searchTimeout = setTimeout(() => {
                 const items = document.querySelectorAll('.auction-item');
-                
                 items.forEach(item => {
                     const itemName = item.querySelector('h3').textContent.toLowerCase();
                     const matches = itemName.includes(searchTerm);
                     item.style.display = matches ? 'flex' : 'none';
                 });
-            }, 300); // 300ms delay
+            }, 300);
         });
-    }
-
-    const adminTools = document.getElementById('admin-tools');
-    if (adminTools) {
-        adminTools.style.display = 'block';
     }
 }
 
