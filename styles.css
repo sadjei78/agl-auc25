@@ -955,14 +955,14 @@ button[type="submit"]:hover,
     background: var(--background-color);
 }
 
+#search-panel {
+    margin-bottom: 20px;
+}
+
 #search-panel h3 {
     margin-top: 0;
     margin-bottom: 10px;
     color: var(--text-color);
-}
-
-.search-container {
-    width: 100%;
 }
 
 #item-search {
@@ -973,12 +973,10 @@ button[type="submit"]:hover,
     margin-bottom: 10px;
 }
 
-#search-results {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
+/* Remove these general search styles since they're now part of admin tools
+.search-container { ... }
+.search-input { ... }
+*/
 
 /* Remove the tab-related styles since we're not using tabs anymore */
 .admin-tools-tabs {
@@ -1289,6 +1287,7 @@ button[type="submit"]:hover,
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
+    min-width: 160px;  /* Ensure enough width for the longer text */
 }
 
 .add-response-button:hover {
@@ -1403,4 +1402,14 @@ button[type="submit"]:hover,
     font-size: 24px;
     margin-bottom: 30px;
     color: var(--text-color);
+}
+
+@media screen and (max-width: 768px) {
+    .search-container {
+        margin: 10px;
+    }
+    
+    .search-input {
+        width: calc(100% - 20px);
+    }
 }

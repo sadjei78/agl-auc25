@@ -19,6 +19,9 @@ let lastMessageTimestamp = null; // Track last message time
 const messageCache = new Map(); // Cache messages by user
 let currentChatUser = null; // Track current chat user
 
+// Add this near the top of script.js with other global variables
+let searchTimeout = null;
+
 // Define column structure
 const COLUMNS = {
     ID: 0,              // A - Item ID
@@ -1316,7 +1319,25 @@ function initializeAdminTools() {
 
     const searchInput = document.getElementById('item-search');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleItemSearch, 300));
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            // Clear the previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Set a new timeout to prevent too many searches while typing
+            searchTimeout = setTimeout(() => {
+                const items = document.querySelectorAll('.auction-item');
+                
+                items.forEach(item => {
+                    const itemName = item.querySelector('h3').textContent.toLowerCase();
+                    const matches = itemName.includes(searchTerm);
+                    item.style.display = matches ? 'flex' : 'none';
+                });
+            }, 300); // 300ms delay
+        });
     }
 
     const adminTools = document.getElementById('admin-tools');
@@ -1325,103 +1346,31 @@ function initializeAdminTools() {
     }
 }
 
-function handleItemSearch() {
-    const searchTerm = document.getElementById('item-search').value.toLowerCase();
-    const resultsContainer = document.getElementById('search-results');
-    
-    if (!searchTerm) {
-        resultsContainer.innerHTML = '';
-        return;
+function setupAdminTools() {
+    const searchInput = document.getElementById('item-search');
+    let searchTimeout = null;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            // Clear the previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Set a new timeout to prevent too many searches while typing
+            searchTimeout = setTimeout(() => {
+                const items = document.querySelectorAll('.auction-item');
+                
+                items.forEach(item => {
+                    const itemName = item.querySelector('h3').textContent.toLowerCase();
+                    const matches = itemName.includes(searchTerm);
+                    item.style.display = matches ? 'flex' : 'none';
+                });
+            }, 300); // 300ms delay
+        });
     }
-
-    showSpinner();
-    Promise.all([
-        fetch(`${scriptURL}?action=getAuctionItems`),
-        fetch(`${scriptURL}?action=getCannedResponses`)
-    ])
-        .then(([itemsResponse, responsesResponse]) => 
-            Promise.all([itemsResponse.json(), responsesResponse.json()])
-        )
-        .then(([items, cannedResponses]) => {
-            const filteredItems = items.filter(item => 
-                item.name.toLowerCase().includes(searchTerm) ||
-                item.description.toLowerCase().includes(searchTerm) ||
-                item.category.toLowerCase().includes(searchTerm) ||
-                item.id.toString().includes(searchTerm)
-            );
-
-            resultsContainer.innerHTML = filteredItems.map(item => {
-                // Get canned responses for this item
-                const itemResponseData = cannedResponses[item.id] || { name: item.name, responses: [] };
-                const responseButtons = itemResponseData.responses.map(response => `
-                    <button class="canned-response" 
-                            onclick="insertCannedResponse('${escapeHtml(response)}')"
-                            title="${escapeHtml(response)}">
-                        ${escapeHtml(response.substring(0, 30))}${response.length > 30 ? '...' : ''}
-                    </button>
-                `).join('');
-
-                return `
-                    <div class="search-result-item">
-                        <div class="item-header" 
-                             onclick="insertItemDetails('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
-                            <strong>${escapeHtml(item.name)}</strong>
-                            <div class="item-details">
-                                <span>Category: ${escapeHtml(item.category)}</span>
-                                <span>Current Bid: $${item.highestBid || item.startingBid}</span>
-                                <span>Total Bids: ${item.totBids || 0}</span>
-                                <span class="bid-status ${item.biddingActive ? 'active' : 'inactive'}">
-                                    ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="canned-responses">
-                            <h4>Quick Responses:</h4>
-                            <div class="response-buttons">
-                                ${responseButtons}
-                            </div>
-                            <div class="add-response-form">
-                                <textarea class="response-input" 
-                                         placeholder="Type new response..."
-                                         id="response-input-${item.id}"></textarea>
-                                <button class="add-response-button"
-                                        onclick="addCannedResponse('${item.id}', '${escapeHtml(item.name)}')">
-                                    Add Response
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        })
-        .catch(error => {
-            console.error('Error searching items:', error);
-            resultsContainer.innerHTML = '<div class="search-error">Error searching items</div>';
-        })
-        .finally(() => hideSpinner());
-}
-
-function insertItemDetails(itemName, currentBid, totalBids, isActive) {
-    const chatInput = document.getElementById('chat-input');
-    if (chatInput) {
-        const status = isActive ? 'bidding is open' : 'bidding is closed';
-        const bidInfo = totalBids > 0 ? `current bid is $${currentBid}` : `starting bid is $${currentBid}`;
-        chatInput.value = `Regarding "${itemName}": ${bidInfo}, ${status}. `;
-        chatInput.focus();
-    }
-}
-
-// Utility function for debouncing search
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
 }
 
 // Add new polling control functions
@@ -1510,7 +1459,7 @@ window.addCannedResponse = async function(itemId, itemName) {
         if (data.success) {
             responseInput.value = '';
             // Refresh the search to show the new response
-            handleItemSearch();
+            setupAdminTools();
         } else {
             alert('Failed to add response: ' + (data.message || 'Unknown error'));
         }
@@ -1594,5 +1543,81 @@ async function initializeAdminChatSessions() {
 // Keep only essential error logging
 function handleError(error, context) {
     console.error(`Error in ${context}:`, error);
+}
+
+function handleItemSearch() {
+    const searchTerm = document.getElementById('item-search').value.toLowerCase();
+    const resultsContainer = document.getElementById('search-results');
+    
+    if (!searchTerm) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+
+    showSpinner();
+    Promise.all([
+        fetch(`${scriptURL}?action=getAuctionItems`),
+        fetch(`${scriptURL}?action=getCannedResponses`)
+    ])
+        .then(([itemsResponse, responsesResponse]) => 
+            Promise.all([itemsResponse.json(), responsesResponse.json()])
+        )
+        .then(([items, cannedResponses]) => {
+            const filteredItems = items.filter(item => 
+                item.name.toLowerCase().includes(searchTerm) ||
+                item.description.toLowerCase().includes(searchTerm) ||
+                item.category.toLowerCase().includes(searchTerm) ||
+                item.id.toString().includes(searchTerm)
+            );
+
+            resultsContainer.innerHTML = filteredItems.map(item => {
+                // Get canned responses for this item
+                const itemResponseData = cannedResponses[item.id] || { name: item.name, responses: [] };
+                const responseButtons = itemResponseData.responses.map(response => `
+                    <button class="canned-response" 
+                            onclick="insertCannedResponse('${escapeHtml(response)}')"
+                            title="${escapeHtml(response)}">
+                        ${escapeHtml(response.substring(0, 30))}${response.length > 30 ? '...' : ''}
+                    </button>
+                `).join('');
+
+                return `
+                    <div class="search-result-item">
+                        <div class="item-header" 
+                             onclick="insertItemDetails('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
+                            <strong>${escapeHtml(item.name)}</strong>
+                            <div class="item-details">
+                                <span>Category: ${escapeHtml(item.category)}</span>
+                                <span>Current Bid: $${item.highestBid || item.startingBid}</span>
+                                <span>Total Bids: ${item.totBids || 0}</span>
+                                <span class="bid-status ${item.biddingActive ? 'active' : 'inactive'}">
+                                    ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="canned-responses">
+                            <h4>Quick Responses:</h4>
+                            <div class="response-buttons">
+                                ${responseButtons}
+                            </div>
+                            <div class="add-response-form">
+                                <textarea class="response-input" 
+                                         placeholder="Type new response..."
+                                         id="response-input-${item.id}"></textarea>
+                                <button class="add-response-button"
+                                        onclick="addCannedResponse('${item.id}', '${escapeHtml(item.name)}')">
+                                    Add Canned Response
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.error('Error searching items:', error);
+            resultsContainer.innerHTML = '<div class="search-error">Error searching items</div>';
+        })
+        .finally(() => hideSpinner());
 }
 
