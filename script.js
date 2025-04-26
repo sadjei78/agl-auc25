@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(categoryCounts => {
                 console.log('Category Counts:', categoryCounts);
                 const container = document.getElementById('auction-items-container');
-                container.innerHTML = ''; // Clear previous items
+                container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
 
                 // Sort categories alphabetically
                 const sortedCategories = Object.entries(categoryCounts)
@@ -1463,7 +1463,7 @@ function displayAuctionItems(items) {
         console.error('Auction items container not found');
         return;
     }
-    container.innerHTML = '';
+    container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
 
     // Create category containers
     const categoryContainers = {};
@@ -1474,27 +1474,20 @@ function displayAuctionItems(items) {
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'category-section';
             
-            // Add category header with item count
+            // Count items in this category
             const itemCount = items.filter(i => 
-                (i.category && i.category.trim()) || 'Uncategorized'
+                (i.category && i.category.trim() || 'Uncategorized') === category
             ).length;
             
-            categoryDiv.innerHTML = `
-                <h2>${escapeHtml(category)} (${itemCount} items)</h2>
-                <button class="show-items-btn" onclick="showCategoryItems(this, '${escapeHtml(category)}')">
-                    Show Items
-                </button>
-            `;
+            categoryDiv.innerHTML = `<h2>${escapeHtml(category)} (${itemCount} items)</h2>`;
             
-            // Create and hide the items container
             categoryContainers[category] = document.createElement('div');
             categoryContainers[category].className = 'category-items';
-            categoryContainers[category].style.display = 'none';
             categoryDiv.appendChild(categoryContainers[category]);
             container.appendChild(categoryDiv);
         }
 
-        // Add item to its category container (but container is hidden)
+        // Add item to its category container
         const itemElement = createItemElement(item);
         categoryContainers[category].appendChild(itemElement);
     });
