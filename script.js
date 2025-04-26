@@ -1554,16 +1554,23 @@ function displayAuctionItems(items) {
 
 // Update initializeAdminChatSessions to use Firebase
 async function initializeAdminChatSessions() {
+    // First check if user is logged in
+    const user = auth.currentUser;
+    if (!user) {
+        console.log('No user logged in');
+        return;
+    }
+
     try {
         // Check if user is admin
-        const adminRef = ref(database, `admins/${auth.currentUser.uid}`);
+        const adminRef = ref(database, `admins/${user.uid}`);
         const adminSnapshot = await get(adminRef);
         const isAdmin = adminSnapshot.exists();
 
         if (isAdmin) {
             console.log('Initializing admin chat sessions');
             // Initialize chat with admin privileges
-            chat.initialize(localStorage.getItem('userEmail'), true);
+            chat.initialize(user.email, true);
             
             // Show admin badge
             const adminBadge = document.getElementById('admin-badge');
@@ -1573,12 +1580,14 @@ async function initializeAdminChatSessions() {
         } else {
             console.log('User is not an admin');
             // Initialize regular user chat
-            chat.initialize(localStorage.getItem('userEmail'), false);
+            chat.initialize(user.email, false);
         }
     } catch (error) {
         console.error('Error checking admin status:', error);
         // Initialize as regular user if there's an error
-        chat.initialize(localStorage.getItem('userEmail'), false);
+        if (user) {
+            chat.initialize(user.email, false);
+        }
     }
 }
 
