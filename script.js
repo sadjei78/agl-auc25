@@ -199,33 +199,31 @@ window.insertItemDetails = function(itemName, currentBid, totalBids, isActive) {
 };
 
 // Add this function to handle login success
-function handleLoginSuccess(result, loginEmail) {
-    // Remove this line
-    // console.log('Login success with result:', result); // Debug log
-    
-    // Store session info and user details
-    localStorage.setItem('sessionToken', result.token);
-    localStorage.setItem('userEmail', loginEmail.value);
-    localStorage.setItem('firstName', result.firstName);
-    localStorage.setItem('lastName', result.lastName);
-    localStorage.setItem('adminType', result.adminType || 'user');
-    
-    // Update UI
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('registration').style.display = 'none';
-    document.getElementById('auction-items').style.display = 'block';
-    document.getElementById('chat').style.display = 'block';
-    
-    // Display admin badge if applicable
-    displayAdminBadge(result.adminType);
-    
-    // Initialize chat after successful login
-    initializeChat();
+async function handleLoginSuccess(user) {
+    try {
+        // Check if user is admin
+        const adminRef = ref(database, `admins/${user.uid}`);
+        const adminSnapshot = await get(adminRef);
+        const isAdmin = adminSnapshot.exists();
 
-    // Initialize admin tools if admin
-    if (result.adminType !== 'user') {
+        // Store admin status
+        localStorage.setItem('adminType', isAdmin ? 'admin' : 'user');
+        localStorage.setItem('userEmail', user.email);
+
+        // Initialize chat and admin tools
+        chat.initialize(user.email, isAdmin);
         initializeAdminTools();
-        initializeAdminChatSessions();
+
+        // Update UI elements
+        displayAdminBadge(isAdmin ? 'admin' : 'user');
+        
+        // Initialize admin chat sessions if needed
+        if (isAdmin) {
+            initializeAdminChatSessions();
+        }
+
+    } catch (error) {
+        console.error('Error in handleLoginSuccess:', error);
     }
 }
 
@@ -280,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (result.success) {
-                handleLoginSuccess(result, loginEmail);
+                handleLoginSuccess(result.user);
                 if (loginError) loginError.style.display = 'none';
                 await loadAuctionItems(); // Load items after successful login
             } else {
@@ -1568,4 +1566,39 @@ window.handleItemSearch = function() {
         })
         .finally(() => hideSpinner());
 };
+
+// Add this function back if it was removed
+function initializeAdminTools() {
+    if (localStorage.getItem('adminType') === 'user') {
+        return;
+    }
+
+    const searchInput = document.getElementById('item-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            // Clear the previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Set a new timeout to prevent too many searches while typing
+            searchTimeout = setTimeout(() => {
+                const items = document.querySelectorAll('.auction-item');
+                
+                items.forEach(item => {
+                    const itemName = item.querySelector('h3').textContent.toLowerCase();
+                    const matches = itemName.includes(searchTerm);
+                    item.style.display = matches ? 'flex' : 'none';
+                });
+            }, 300); // 300ms delay
+        });
+    }
+
+    const adminTools = document.getElementById('admin-tools');
+    if (adminTools) {
+        adminTools.style.display = 'block';
+    }
+}
 
