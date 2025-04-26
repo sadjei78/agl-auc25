@@ -11,7 +11,7 @@ export const config = {
     },
     scriptURL: "YOUR_GOOGLE_SCRIPT_URL",
     githubPages: {
-        baseUrl: "https://sadjei78.github.io/agl-auc25",
+        baseUrl: "https://sadjei78.github.io/agl-auc25/auction.html",
         environment: "production"
     }
 }; 
