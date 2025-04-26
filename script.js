@@ -1312,67 +1312,6 @@ function stopMessagePolling() {
     }
 }
 
-function initializeAdminTools() {
-    if (localStorage.getItem('adminType') === 'user') {
-        return;
-    }
-
-    const searchInput = document.getElementById('item-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            
-            // Clear the previous timeout
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-
-            // Set a new timeout to prevent too many searches while typing
-            searchTimeout = setTimeout(() => {
-                const items = document.querySelectorAll('.auction-item');
-                
-                items.forEach(item => {
-                    const itemName = item.querySelector('h3').textContent.toLowerCase();
-                    const matches = itemName.includes(searchTerm);
-                    item.style.display = matches ? 'flex' : 'none';
-                });
-            }, 300); // 300ms delay
-        });
-    }
-
-    const adminTools = document.getElementById('admin-tools');
-    if (adminTools) {
-        adminTools.style.display = 'block';
-    }
-}
-
-function setupAdminTools() {
-    const searchInput = document.getElementById('item-search');
-    let searchTimeout = null;
-
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            
-            // Clear the previous timeout
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-
-            // Set a new timeout to prevent too many searches while typing
-            searchTimeout = setTimeout(() => {
-                const items = document.querySelectorAll('.auction-item');
-                
-                items.forEach(item => {
-                    const itemName = item.querySelector('h3').textContent.toLowerCase();
-                    const matches = itemName.includes(searchTerm);
-                    item.style.display = matches ? 'flex' : 'none';
-                });
-            }, 300); // 300ms delay
-        });
-    }
-}
-
 // Add new polling control functions
 let activeSessionPollingInterval = null;
 
@@ -1424,15 +1363,6 @@ async function generateNewRSSToken() {
         alert('Error generating RSS token: ' + error.message);
     }
 }
-
-// Add function to insert canned response into chat
-window.insertCannedResponse = function(response) {
-    const chatInput = document.getElementById('chat-input');
-    if (chatInput) {
-        chatInput.value = response;
-        chatInput.focus();
-    }
-};
 
 // Add function to create new canned response
 window.addCannedResponse = async function(itemId, itemName) {
@@ -1501,7 +1431,7 @@ function displayAuctionItems(items) {
     });
 }
 
-// Update initializeAdminChatSessions to use Firebase
+// Update initializeAdminChatSessions function
 async function initializeAdminChatSessions() {
     // First check if user is logged in
     const user = auth.currentUser;
@@ -1521,21 +1451,38 @@ async function initializeAdminChatSessions() {
             // Initialize chat with admin privileges
             chat.initialize(user.email, true);
             
-            // Show admin badge
+            // Show admin badge and chat elements
             const adminBadge = document.getElementById('admin-badge');
-            if (adminBadge) {
-                adminBadge.style.display = 'block';
-            }
+            const sessionButtons = document.querySelector('.session-buttons');
+            const adminTools = document.getElementById('admin-tools');
+            
+            if (adminBadge) adminBadge.style.display = 'block';
+            if (sessionButtons) sessionButtons.style.display = 'flex';
+            if (adminTools) adminTools.style.display = 'block';
         } else {
             console.log('User is not an admin');
             // Initialize regular user chat
             chat.initialize(user.email, false);
+            
+            // Hide admin elements
+            const sessionButtons = document.querySelector('.session-buttons');
+            const adminTools = document.getElementById('admin-tools');
+            
+            if (sessionButtons) sessionButtons.style.display = 'none';
+            if (adminTools) adminTools.style.display = 'none';
         }
     } catch (error) {
         console.error('Error checking admin status:', error);
         // Initialize as regular user if there's an error
         if (user) {
             chat.initialize(user.email, false);
+            
+            // Hide admin elements
+            const sessionButtons = document.querySelector('.session-buttons');
+            const adminTools = document.getElementById('admin-tools');
+            
+            if (sessionButtons) sessionButtons.style.display = 'none';
+            if (adminTools) adminTools.style.display = 'none';
         }
     }
 }
@@ -1545,7 +1492,8 @@ function handleError(error, context) {
     console.error(`Error in ${context}:`, error);
 }
 
-function handleItemSearch() {
+// Make handleItemSearch available to HTML
+window.handleItemSearch = function() {
     const searchTerm = document.getElementById('item-search').value.toLowerCase();
     const resultsContainer = document.getElementById('search-results');
     
@@ -1619,5 +1567,5 @@ function handleItemSearch() {
             resultsContainer.innerHTML = '<div class="search-error">Error searching items</div>';
         })
         .finally(() => hideSpinner());
-}
+};
 

@@ -2,7 +2,6 @@ import { auth, database, ref, set, onValue, push, get, child } from './firebase-
 
 class Chat {
     constructor() {
-        // Don't initialize Firebase refs in constructor
         this.currentUser = null;
         this.isAdmin = false;
         this.currentChatUser = null;
@@ -17,16 +16,40 @@ class Chat {
         this.chatInput = document.getElementById('chat-input');
         this.sendButton = document.getElementById('send-message');
         this.sessionButtons = document.querySelector('.session-buttons');
+
+        // Clear any existing messages and show welcome message
+        if (this.chatMessages) {
+            this.chatMessages.innerHTML = `
+                <div class="chat-message system-message">
+                    Welcome to the chat system. Please wait while we connect you...
+                </div>
+            `;
+        }
     }
 
     initialize(userEmail, isAdmin) {
+        if (!userEmail) {
+            console.error('No user email provided for chat initialization');
+            return;
+        }
+
         this.currentUser = userEmail;
         this.isAdmin = isAdmin;
 
-        // Initialize Firebase refs here instead of constructor
+        // Initialize Firebase refs
         this.messagesRef = ref(database, 'messages');
         this.activeUsersRef = ref(database, 'activeUsers');
         this.typingRef = ref(database, 'typing');
+
+        // Update chat window with user info
+        if (this.chatMessages) {
+            this.chatMessages.innerHTML = `
+                <div class="chat-message system-message">
+                    Connected as ${this.currentUser}
+                    ${this.isAdmin ? '(Admin)' : ''}
+                </div>
+            `;
+        }
 
         // Setup message input handlers
         this.setupMessageHandlers();
