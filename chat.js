@@ -25,14 +25,10 @@ class Chat {
         // Setup appropriate chat interface
         if (isAdmin) {
             this.setupAdminChat();
+            // Start polling for active users if admin
+            this.startPolling();  // This will call loadActiveUsers()
         } else {
             this.setupUserChat();
-        }
-
-        // Start polling for active users if admin
-        if (isAdmin) {
-            this.loadActiveUsers();  // Initial load
-            this.startPolling();
         }
     }
 
@@ -186,11 +182,16 @@ class Chat {
     }
 
     async publishToRSS(message) {
+        const email = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('sessionToken');
+
         const params = new URLSearchParams({
-            action: 'publishToRSS',
+            action: 'publishChatMessage',  // Update to match server endpoint
             message: message.message,
             sender: message.sender,
-            timestamp: message.timestamp
+            timestamp: message.timestamp,
+            email: email,
+            token: token
         });
 
         try {
@@ -418,11 +419,14 @@ class Chat {
         if (!email || !token) return;
 
         try {
-            const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+            // Use the correct endpoint for admin chat users
+            const response = await fetch(`${scriptURL}?action=getAdminChatUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
             const data = await response.json();
             
             if (data.success && Array.isArray(data.users)) {
                 this.displayActiveUsers(data.users);
+            } else {
+                console.error('Invalid active users data:', data);
             }
         } catch (error) {
             console.error('Error loading active users:', error);
