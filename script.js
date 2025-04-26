@@ -747,14 +747,14 @@ async function loadActiveUsers() {
     }
 
     try {
-        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+        const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         
-        if (data.success && Array.isArray(data.activeUsers)) {
-            displaySessionButtons(data.activeUsers);
+        if (data.success && Array.isArray(data.users)) {
+            displaySessionButtons(data.users);
         } else {
             console.error('Invalid active users data:', data);
         }
