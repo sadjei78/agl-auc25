@@ -1635,8 +1635,8 @@ function initializeAdminTools() {
     }
 }
 
-// Add this function near the top with other utility functions
-async function loadAuctionItems() {
+// Change the loadAuctionItems function to be accessible globally
+window.loadAuctionItems = async function() {
     try {
         showSpinner();
         const response = await fetch(`${scriptURL}?action=getAuctionItems`);
@@ -1644,7 +1644,7 @@ async function loadAuctionItems() {
         const items = await response.json();
         
         if (Array.isArray(items)) {
-            displayWelcomePage();
+            displayAuctionItems(items);  // Show all items grouped by category
         } else {
             console.error('Invalid items data received:', items);
         }
@@ -1653,7 +1653,7 @@ async function loadAuctionItems() {
     } finally {
         hideSpinner();
     }
-}
+};
 
 // Add this function to display just categories
 function displayCategories(items) {
