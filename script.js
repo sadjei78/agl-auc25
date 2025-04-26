@@ -235,69 +235,79 @@ async function handleLoginSuccess(result, loginEmail) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Hide modals initially
-    document.getElementById('add-item-modal').style.display = 'none';
-    document.getElementById('image-modal').style.display = 'none';
-    document.getElementById('bid-modal').style.display = 'none';
-
-    // Get form elements
+    // Get all necessary DOM elements first
+    const loginSection = document.getElementById('login');
     const loginForm = document.getElementById('login-form');
-    const registrationForm = document.getElementById('registration-form');
     const loginEmail = document.getElementById('login-email');
     const loginPassword = document.getElementById('login-password');
     const loginError = document.getElementById('login-error');
+    const registrationSection = document.getElementById('registration');
+    const registrationForm = document.getElementById('registration-form');
+    const biddingSection = document.getElementById('bidding');
+    const auctionItemsSection = document.getElementById('auction-items');
+    const chatSection = document.getElementById('chat');
+    const adminBadge = document.getElementById('admin-badge');
+
+    // Check if we have the required elements
+    if (!loginForm) {
+        console.error('Login form not found');
+        return;
+    }
+
+    // Hide modals initially
+    document.getElementById('add-item-modal')?.style.display = 'none';
+    document.getElementById('image-modal')?.style.display = 'none';
+    document.getElementById('bid-modal')?.style.display = 'none';
 
     // Hide all sections except login initially
-    document.getElementById('registration').style.display = 'none';
-    document.getElementById('bidding').style.display = 'none';
-    document.getElementById('auction-items').style.display = 'none';
-    document.getElementById('chat').style.display = 'none';
-    document.getElementById('admin-badge').style.display = 'none';
+    if (registrationSection) registrationSection.style.display = 'none';
+    if (biddingSection) biddingSection.style.display = 'none';
+    if (auctionItemsSection) auctionItemsSection.style.display = 'none';
+    if (chatSection) chatSection.style.display = 'none';
+    if (adminBadge) adminBadge.style.display = 'none';
 
     // Handle login form submission
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showSpinner();
 
-            if (!loginEmail || !loginPassword) {
-                console.error('Login form elements not found');
-                hideSpinner();
-                return;
-            }
+        if (!loginEmail || !loginPassword) {
+            console.error('Login form elements not found');
+            hideSpinner();
+            return;
+        }
 
-            try {
-                const hashedPassword = btoa(loginPassword.value);
-                const params = new URLSearchParams({
-                    action: 'loginUser',
-                    email: loginEmail.value,
-                    password: hashedPassword
-                });
+        try {
+            const hashedPassword = btoa(loginPassword.value);
+            const params = new URLSearchParams({
+                action: 'loginUser',
+                email: loginEmail.value,
+                password: hashedPassword
+            });
 
-                const response = await fetch(`${scriptURL}?${params.toString()}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const result = await response.json();
+            const response = await fetch(`${scriptURL}?${params.toString()}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
 
-                if (result.success) {
-                    handleLoginSuccess(result, loginEmail);
-                    if (loginError) loginError.style.display = 'none';
-                } else {
-                    if (loginError) {
-                        loginError.textContent = result.message || 'Invalid email or password';
-                        loginError.style.display = 'block';
-                    }
-                }
-            } catch (error) {
-                console.error('Login error:', error);
+            if (result.success) {
+                handleLoginSuccess(result, loginEmail);
+                if (loginError) loginError.style.display = 'none';
+            } else {
                 if (loginError) {
-                    loginError.textContent = 'An error occurred during login';
+                    loginError.textContent = result.message || 'Invalid email or password';
                     loginError.style.display = 'block';
                 }
-            } finally {
-                hideSpinner();
             }
-        });
-    }
+        } catch (error) {
+            console.error('Login error:', error);
+            if (loginError) {
+                loginError.textContent = 'An error occurred during login';
+                loginError.style.display = 'block';
+            }
+        } finally {
+            hideSpinner();
+        }
+    });
 
     // Handle registration form submission
     if (registrationForm) {
@@ -363,13 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatWindow = document.getElementById('chat-window');
 
     // Show login section by default
-    const loginSection = document.getElementById('login');
-    const registrationSection = document.getElementById('registration');
-    const biddingSection = document.getElementById('bidding');
-    const auctionItemsSection = document.getElementById('auction-items');
-    const chatSection = document.getElementById('chat');
     const welcomeMessage = document.getElementById('welcome-message');
-    const adminBadge = document.getElementById('admin-badge'); // Admin badge element
 
     // Variable to store the logged-in user's email
     let userEmail = '';
