@@ -26,6 +26,12 @@ class Chat {
         } else {
             this.setupUserChat();
         }
+
+        // Start polling for active users if admin
+        if (isAdmin) {
+            this.loadActiveUsers();  // Initial load
+            this.startPolling();
+        }
     }
 
     initializeElements() {
@@ -401,6 +407,49 @@ class Chat {
         
         // Scroll to bottom
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    async loadActiveUsers() {
+        const email = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('sessionToken');
+        
+        if (!email || !token) return;
+
+        try {
+            const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+            const data = await response.json();
+            
+            if (data.success && Array.isArray(data.users)) {
+                this.displayActiveUsers(data.users);
+            }
+        } catch (error) {
+            console.error('Error loading active users:', error);
+        }
+    }
+
+    startPolling() {
+        // Start polling for active users
+        setInterval(() => this.loadActiveUsers(), 30000);  // Poll every 30 seconds
+    }
+
+    displayActiveUsers(users) {
+        if (!this.sessionButtons) return;
+        
+        this.sessionButtons.innerHTML = '';
+        users.forEach(user => {
+            const button = document.createElement('button');
+            button.className = 'session-button';
+            button.textContent = user.email;
+            
+            // Add unread count if any
+            const unreadCount = this.unreadCounts[user.email] || 0;
+            if (unreadCount > 0) {
+                button.innerHTML += `<span class="unread-count">${unreadCount}</span>`;
+            }
+            
+            button.onclick = () => this.selectChatSession(user.email);
+            this.sessionButtons.appendChild(button);
+        });
     }
 }
 

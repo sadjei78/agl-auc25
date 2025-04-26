@@ -207,11 +207,6 @@ function initializeAdminTools() {
     }
 }
 
-function initializeAdminChatSessions() {
-    // Remove loadActiveUsers call since it's included in startActiveSessionPolling
-    startActiveSessionPolling();
-}
-
 // Update chat initialization in handleLoginSuccess
 async function handleLoginSuccess(result, loginEmail) {
     try {
@@ -734,34 +729,6 @@ function setupAdminTabs() {
             }
         });
     });
-}
-
-// Update loadActiveUsers to fix the chat error
-async function loadActiveUsers() {
-    const email = localStorage.getItem('userEmail');
-    const token = localStorage.getItem('sessionToken');
-    
-    if (!email || !token) {
-        console.error('No session token or email found');
-        return;
-    }
-
-    try {
-        // Use getChatMessages instead of getActiveUsers
-        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        
-        if (data.success && Array.isArray(data.activeUsers)) {
-            displaySessionButtons(data.activeUsers);
-        } else {
-            console.error('Invalid active users data:', data);
-        }
-    } catch (error) {
-        console.error('Error loading active users:', error);
-    }
 }
 
 function displaySessionButtons(users) {
