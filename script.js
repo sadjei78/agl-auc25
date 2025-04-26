@@ -375,13 +375,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     chat.initialize(regEmail.value, data.adminType === 'admin');
 
                     // Load categories instead of all items
-                    const response = await fetch(`${scriptURL}?action=getAuctionItems`);
-                    if (response.ok) {
-                        const items = await response.json();
-                        if (Array.isArray(items)) {
-                            displayCategories(items);
-                        }
-                    }
+                    loadAuctionItems();
+                    // const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+                    // if (response.ok) {
+                    //     const items = await response.json();
+                    //     if (Array.isArray(items)) {
+                    //         displayCategories(items);
+                    //     }
+                    // }
                 } else {
                     alert(data.message || 'Registration failed');
                 }
