@@ -12,9 +12,23 @@
     },
     "activeUsers": {
       ".read": true,
-      ".write": "auth != null",
-      "$user": {
+      ".write": true,
+      "$user_id": {
         ".read": true,
+        ".write": true,
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        "lastActive": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "messages": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$user_id": {
+        ".read": "auth != null",
         ".write": "auth != null"
       }
     },
@@ -25,6 +39,10 @@
     "admins": {
       ".read": "auth != null",
       ".write": false
+    },
+    "typing": {
+      ".read": true,
+      ".write": "auth != null"
     }
   }
 } 
