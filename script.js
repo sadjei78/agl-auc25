@@ -574,52 +574,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Move this function outside DOMContentLoaded
     window.loadAuctionItems = async function() {
-        showSpinner();
         try {
-            const response = await fetch(scriptURL + '?action=getCategoryCounts');
-            const categoryCounts = await response.json();
-            console.log('Category Counts:', categoryCounts);
+            showSpinner();
+            const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const items = await response.json();
             
-            const container = document.getElementById('auction-items-container');
-            container.innerHTML = '<h1>Bidding Section</h1><h2>Available Auction Items</h2>';
-
-            // Sort categories alphabetically
-            const sortedCategories = Object.entries(categoryCounts)
-                .filter(([category]) => category !== 'true' && category !== 'false')
-                .sort(([a], [b]) => a.localeCompare(b));
-
-            // Create accordion for each category
-            sortedCategories.forEach(([category, count]) => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'accordion';
-
-                const header = document.createElement('h3');
-                header.innerText = `${category} (${count})`; // Display item count
-                header.id = `header-${category.replace(/\s+/g, '-').toLowerCase()}`; // Assign a unique ID
-                header.onclick = () => {
-                    const content = categoryDiv.querySelector('.accordion-content');
-                    const isExpanded = content.style.display === 'block';
-                    // Collapse all other sections
-                    document.querySelectorAll('.accordion-content').forEach(c => c.style.display = 'none');
-                    // Load items for the clicked category
-                    loadItemsForCategory(category, header.id);
-                    // Toggle the clicked category
-                    content.style.display = isExpanded ? 'none' : 'flex';
-                };
-
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'accordion-content';
-                contentDiv.setAttribute('data-category', category);
-                contentDiv.style.display = 'none'; // Initially collapsed
-
-                categoryDiv.appendChild(header);
-                categoryDiv.appendChild(contentDiv);
-                container.appendChild(categoryDiv);
-            });
-
-            // If no categories match the criteria, display a message
-            if (sortedCategories.length === 0) {
-                container.innerHTML = '<p>No auction items available.</p>';
+            if (Array.isArray(items)) {
+                displayCategories(items);  // Show categories in accordion style
             }
         } catch (error) {
             console.error('Error loading auction items:', error);
@@ -1034,7 +996,7 @@ function setupAdminTabs() {
     });
 }
 
-// Update loadActiveUsers to be async
+// Update loadActiveUsers to fix the chat error
 async function loadActiveUsers() {
     const email = localStorage.getItem('userEmail');
     const token = localStorage.getItem('sessionToken');
@@ -1045,19 +1007,13 @@ async function loadActiveUsers() {
     }
 
     try {
-        const params = new URLSearchParams({
-            action: 'getActiveUsers',
-            email: email,
-            token: token
-        });
-
-        const response = await fetch(`${scriptURL}?${params.toString()}`);
+        const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
         const data = await response.json();
         
-        if (data.success) {
-            updateActiveUsersList(data.users);
+        if (data.success && Array.isArray(data.activeUsers)) {
+            displaySessionButtons(data.activeUsers);
         } else {
-            console.error('Failed to load active users:', data.message);
+            console.error('Invalid active users data:', data);
         }
     } catch (error) {
         console.error('Error loading active users:', error);
