@@ -103,11 +103,14 @@ class Chat {
     }
 
     setupAdminChat() {
+        if (!this.isAdmin) return;
+
+        // Enable chat input for admins
         if (this.chatInput) {
-            this.chatInput.disabled = true;
+            this.chatInput.disabled = false;
             this.chatInput.placeholder = 'Select a user to start chatting...';
         }
-        if (this.sendButton) this.sendButton.disabled = true;
+        if (this.sendButton) this.sendButton.disabled = false;
 
         // Show admin sessions
         const adminSessions = document.getElementById('admin-sessions');
@@ -117,35 +120,24 @@ class Chat {
 
         // Listen for active users
         onValue(this.activeUsersRef, (snapshot) => {
-            console.log('Active users update:', snapshot.val()); // Debug log
             const users = snapshot.val() || {};
             this.updateSessionButtons(users);
         });
     }
 
     setupUserChat() {
+        // Enable chat input for users
         if (this.chatInput) {
             this.chatInput.disabled = false;
             this.chatInput.placeholder = 'Type your message...';
         }
         if (this.sendButton) this.sendButton.disabled = false;
 
-        // Sanitize email for Firebase path
+        // Mark user as active
         const safeEmail = this.sanitizeEmailForPath(this.currentUser);
-
-        // Mark user as active with sanitized email
         set(child(this.activeUsersRef, safeEmail), {
-            email: this.currentUser, // Keep original email for display
+            email: this.currentUser,
             lastActive: Date.now()
-        });
-
-        // Remove user when they disconnect
-        onValue(child(this.activeUsersRef, safeEmail), (snapshot) => {
-            if (snapshot.exists()) {
-                // User is still active
-            } else {
-                // User has disconnected
-            }
         });
 
         // Start listening for messages
@@ -196,39 +188,42 @@ class Chat {
     }
 
     async sendMessage() {
-        if (!this.chatInput?.value.trim()) return;
+        if (!this.chatInput || !this.chatInput.value.trim()) return;
 
-        const messageData = {
-            sender: this.currentUser,
-            message: this.chatInput.value.trim(),
-            timestamp: Date.now(),
-            isAdmin: this.isAdmin,
-            recipient: this.isAdmin ? this.currentChatUser : 'admin',
-            read: false,
-            isPublic: false  // Default to false, can be toggled by admin
-        };
-
-        // Add button for admins to publish to RSS
-        if (this.isAdmin) {
-            const publishButton = document.createElement('button');
-            publishButton.className = 'publish-to-rss';
-            publishButton.textContent = 'Publish to Display';
-            publishButton.onclick = () => this.publishToRSS(messageData);
-        }
+        const message = this.chatInput.value.trim();
+        const timestamp = Date.now();
 
         try {
-            // Use sanitized email for paths
-            const chatPath = this.isAdmin 
-                ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
-                : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
-                
-            const newMessageRef = push(ref(this.messagesRef, chatPath));
-            await set(newMessageRef, messageData);
+            // Create a new message reference
+            const newMessageRef = push(this.messagesRef);
+            
+            // Set the message data
+            set(newMessageRef, {
+                sender: this.currentUser,
+                message: message,
+                timestamp: timestamp,
+                isAdmin: this.isAdmin,
+                recipient: this.currentChatUser || 'admin' // If not admin, send to admin
+            });
+
+            // Clear input after sending
             this.chatInput.value = '';
-            this.chatInput.focus();
+            
+            // Add message to display
+            this.displayMessage({
+                sender: this.currentUser,
+                message: message,
+                timestamp: timestamp,
+                isAdmin: this.isAdmin
+            });
+
         } catch (error) {
             console.error('Error sending message:', error);
-            alert('Failed to send message. Please try again.');
+            // Show error to user
+            this.displayMessage({
+                message: 'Error sending message. Please try again.',
+                isError: true
+            });
         }
     }
 
@@ -260,36 +255,20 @@ class Chat {
         });
     }
 
-    displayMessage(message, messageId) {
+    displayMessage(msg) {
         if (!this.chatMessages) return;
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${message.isAdmin ? 'admin-message' : 'user-message'}`;
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
         
-        messageDiv.innerHTML = `
-            <div class="message-header">
-                <span class="message-sender ${message.isAdmin ? 'admin-label' : 'user-label'}">
-                    ${message.sender}
-                </span>
-                <span class="chat-timestamp">
-                    ${new Date(message.timestamp).toLocaleString()}
-                </span>
-            </div>
-            <div class="chat-text">${message.message}</div>
-        `;
-
-        // Add read status
-        const statusSpan = document.createElement('span');
-        statusSpan.className = `message-status ${message.read ? 'message-read' : 'message-unread'}`;
-        statusSpan.textContent = message.read ? '✓✓' : '✓';
-        messageDiv.querySelector('.message-header').appendChild(statusSpan);
-
-        // Mark message as read if recipient is viewing it
-        if (!message.read && message.recipient === this.currentUser) {
-            this.markMessageAsRead(messageId);
+        if (msg.isError) {
+            messageElement.className += ' error-message';
+            messageElement.textContent = msg.message;
+        } else {
+            messageElement.textContent = `${msg.sender}: ${msg.message}`;
         }
 
-        this.chatMessages.appendChild(messageDiv);
+        this.chatMessages.appendChild(messageElement);
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 
