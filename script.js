@@ -1354,3 +1354,42 @@ window.loadItemsForCategory = async function(category) {
     }
 };
 
+// Add this function to display items in a specific category
+function displayItemsInCategory(category, items) {
+    const categoryContainer = document.getElementById(`category-${escapeHtml(category)}`);
+    if (!categoryContainer) {
+        console.error(`Category container for ${category} not found`);
+        return;
+    }
+
+    categoryContainer.innerHTML = '';
+    items.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
+        
+        const images = [item.image1, item.image2, item.image3].filter(img => img);
+        const primaryImage = images[0] || './images/AuctionDefault.png';
+
+        itemElement.innerHTML = `
+            <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
+                ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
+            </div>
+            <img src="${primaryImage}" 
+                 alt="${escapeHtml(item.name)}" 
+                 class="thumbnail" 
+                 onerror="this.src='./images/AuctionDefault.png'"
+                 onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
+            <h3>${escapeHtml(item.name)}</h3>
+            <p>Current Bid: $${item.highestBid || item.startingBid}</p>
+            <p>Total Bids: ${item.totBids || 0}</p>
+            ${item.biddingActive ? `
+                <button onclick="openBidModal('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.id})">
+                    Place Bid
+                </button>
+            ` : ''}
+        `;
+        
+        categoryContainer.appendChild(itemElement);
+    });
+}
+
