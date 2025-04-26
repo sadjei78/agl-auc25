@@ -24,20 +24,21 @@ jobs:
       - name: Create firebase config
         run: |
           cd deploy
-          echo "// Import the functions you need from the SDKs you need
+          cat > firebase-config.js << 'EOL'
+          // Import the functions you need from the SDKs you need
           import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
           import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
           import { getDatabase, ref, set, onValue, push, get, child } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
           // Your web app's Firebase configuration
           const firebaseConfig = {
-            apiKey: \"${{ secrets.FIREBASE_API_KEY }}\",
-            authDomain: \"${{ secrets.FIREBASE_AUTH_DOMAIN }}\",
-            databaseURL: \"${{ secrets.FIREBASE_DATABASE_URL }}\",
-            projectId: \"${{ secrets.FIREBASE_PROJECT_ID }}\",
-            storageBucket: \"${{ secrets.FIREBASE_STORAGE_BUCKET }}\",
-            messagingSenderId: \"${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}\",
-            appId: \"${{ secrets.FIREBASE_APP_ID }}\"
+            apiKey: "${FIREBASE_API_KEY}",
+            authDomain: "${FIREBASE_AUTH_DOMAIN}",
+            databaseURL: "${FIREBASE_DATABASE_URL}",
+            projectId: "${FIREBASE_PROJECT_ID}",
+            storageBucket: "${FIREBASE_STORAGE_BUCKET}",
+            messagingSenderId: "${FIREBASE_MESSAGING_SENDER_ID}",
+            appId: "${FIREBASE_APP_ID}"
           };
 
           // Initialize Firebase
@@ -46,7 +47,17 @@ jobs:
           const database = getDatabase(app);
 
           // Export the initialized instances and all needed functions
-          export { app, auth, database, ref, set, onValue, push, get, child };" > firebase-config.js
+          export { app, auth, database, ref, set, onValue, push, get, child };
+          EOL
+
+          # Replace environment variables
+          sed -i "s|\${FIREBASE_API_KEY}|${{ secrets.FIREBASE_API_KEY }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_AUTH_DOMAIN}|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_DATABASE_URL}|${{ secrets.FIREBASE_DATABASE_URL }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_PROJECT_ID}|${{ secrets.FIREBASE_PROJECT_ID }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_STORAGE_BUCKET}|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_MESSAGING_SENDER_ID}|${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}|g" firebase-config.js
+          sed -i "s|\${FIREBASE_APP_ID}|${{ secrets.FIREBASE_APP_ID }}|g" firebase-config.js
 
       # Verify firebase config contents
       - name: Check firebase config
