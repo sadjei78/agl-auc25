@@ -234,8 +234,14 @@ async function handleLoginSuccess(result, loginEmail) {
         // Display admin badge
         displayAdminBadge(result.adminType);
 
-        // Load auction items
-        await loadAuctionItems();
+        // Load just categories initially
+        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const items = await response.json();
+        
+        if (Array.isArray(items)) {
+            displayCategories(items);
+        }
 
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
@@ -1408,12 +1414,19 @@ window.addCannedResponse = async function(itemId, itemName) {
 
 function displayAuctionItems(items) {
     const container = document.getElementById('auction-items-container');
+    if (!container) {
+        console.error('Auction items container not found');
+        return;
+    }
     container.innerHTML = '';
 
     // Create category containers
     const categoryContainers = {};
     items.forEach(item => {
-        const category = item.category || 'Uncategorized';
+        // Make sure category exists and has a value
+        const category = (item.category && item.category.trim()) || 'Uncategorized';
+        
+        // Create category section if it doesn't exist
         if (!categoryContainers[category]) {
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'category-section';
@@ -1424,11 +1437,14 @@ function displayAuctionItems(items) {
             container.appendChild(categoryDiv);
         }
 
-        const images = [item.image1, item.image2, item.image3].filter(img => img);
-        const primaryImage = images[0] || 'placeholder-image-url.jpg';
-
+        // Create item element
         const itemElement = document.createElement('div');
         itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
+        
+        // Get filtered images array
+        const images = [item.image1, item.image2, item.image3].filter(img => img);
+        const primaryImage = images[0] || './images/AuctionDefault.png';
+
         itemElement.innerHTML = `
             <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
                 ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
@@ -1447,6 +1463,8 @@ function displayAuctionItems(items) {
                 </button>
             ` : ''}
         `;
+        
+        // Add item to its category container
         categoryContainers[category].appendChild(itemElement);
     });
 }
@@ -1631,6 +1649,53 @@ async function loadAuctionItems() {
         }
     } catch (error) {
         console.error('Error loading auction items:', error);
+    } finally {
+        hideSpinner();
+    }
+}
+
+// Add this function to display just categories
+function displayCategories(items) {
+    const container = document.getElementById('auction-items-container');
+    if (!container) {
+        console.error('Auction items container not found');
+        return;
+    }
+    container.innerHTML = '';
+
+    // Create unique category list
+    const categories = [...new Set(items.map(item => 
+        (item.category && item.category.trim()) || 'Uncategorized'
+    ))];
+
+    // Display categories
+    categories.forEach(category => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'category-section';
+        categoryDiv.innerHTML = `
+            <h2 onclick="loadItemsForCategory('${escapeHtml(category)}')">${escapeHtml(category)}</h2>
+            <div class="category-items" id="category-${escapeHtml(category)}"></div>
+        `;
+        container.appendChild(categoryDiv);
+    });
+}
+
+// Add function to load items for a specific category
+window.loadItemsForCategory = async function(category) {
+    try {
+        showSpinner();
+        const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const items = await response.json();
+        
+        if (Array.isArray(items)) {
+            const categoryItems = items.filter(item => 
+                ((item.category && item.category.trim()) || 'Uncategorized') === category
+            );
+            displayItemsInCategory(category, categoryItems);
+        }
+    } catch (error) {
+        console.error('Error loading category items:', error);
     } finally {
         hideSpinner();
     }
