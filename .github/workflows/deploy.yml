@@ -17,6 +17,8 @@ jobs:
           mkdir deploy
           cp -r * deploy/ || true
           cd deploy
+          # Remove template file if it exists
+          rm -f firebase-config.template.js
       
       # Create config files in deployment directory
       - name: Create firebase config
@@ -45,6 +47,13 @@ jobs:
 
           // Export the initialized instances and all needed functions
           export { app, auth, database, ref, set, onValue, push, get, child };" > firebase-config.js
+
+      # Verify firebase config contents
+      - name: Check firebase config
+        run: |
+          cd deploy
+          echo "Contents of firebase-config.js:"
+          cat firebase-config.js
 
       - name: Create app config
         run: |
