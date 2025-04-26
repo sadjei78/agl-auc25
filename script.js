@@ -201,31 +201,23 @@ window.insertItemDetails = function(itemName, currentBid, totalBids, isActive) {
 // Update the login success handler
 async function handleLoginSuccess(result, loginEmail) {
     try {
-        // Store session info and user details
+        // Store user data in localStorage
         localStorage.setItem('sessionToken', result.token);
         localStorage.setItem('userEmail', loginEmail.value);
         localStorage.setItem('firstName', result.firstName);
         localStorage.setItem('lastName', result.lastName);
         localStorage.setItem('adminType', result.adminType || 'user');
 
-        // Update UI
+        // Update UI visibility
         document.getElementById('login').style.display = 'none';
         document.getElementById('registration').style.display = 'none';
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
 
-        // Wait for Firebase to be ready
-        await new Promise(resolve => {
-            const unsubscribe = auth.onAuthStateChanged(user => {
-                unsubscribe();
-                resolve();
-            });
-        });
-
-        // Initialize chat with admin status from result
+        // Initialize chat
         chat.initialize(loginEmail.value, result.adminType === 'admin');
 
-        // Initialize admin features if admin
+        // Setup admin features if admin
         if (result.adminType === 'admin') {
             initializeAdminTools();
             initializeAdminChatSessions();
@@ -234,7 +226,18 @@ async function handleLoginSuccess(result, loginEmail) {
         // Display admin badge
         displayAdminBadge(result.adminType);
 
-        // Load just categories initially
+        // Load initial categories view
+        await loadInitialCategories();
+
+    } catch (error) {
+        console.error('Error in handleLoginSuccess:', error);
+    }
+}
+
+// Add new function to handle initial load
+async function loadInitialCategories() {
+    try {
+        showSpinner();
         const response = await fetch(`${scriptURL}?action=getAuctionItems`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const items = await response.json();
@@ -242,9 +245,10 @@ async function handleLoginSuccess(result, loginEmail) {
         if (Array.isArray(items)) {
             displayCategories(items);
         }
-
     } catch (error) {
-        console.error('Error in handleLoginSuccess:', error);
+        console.error('Error loading categories:', error);
+    } finally {
+        hideSpinner();
     }
 }
 
@@ -374,15 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Initialize chat
                     chat.initialize(regEmail.value, data.adminType === 'admin');
 
-                    // Load categories instead of all items
-                    loadAuctionItems();
-                    // const response = await fetch(`${scriptURL}?action=getAuctionItems`);
-                    // if (response.ok) {
-                    //     const items = await response.json();
-                    //     if (Array.isArray(items)) {
-                    //         displayCategories(items);
-                    //     }
-                    // }
+                    // Load initial categories view
+                    await loadInitialCategories();
                 } else {
                     alert(data.message || 'Registration failed');
                 }
