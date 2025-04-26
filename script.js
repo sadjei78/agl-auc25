@@ -226,8 +226,8 @@ async function handleLoginSuccess(result, loginEmail) {
         // Display admin badge
         displayAdminBadge(result.adminType);
 
-        // Load auction items - use the exact same function as refresh
-        await loadAuctionItems();
+        // Show welcome page
+        displayWelcomePage();
 
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
@@ -1383,7 +1383,7 @@ async function generateNewRSSToken() {
     }
 }
 
-// Add function to create new canned response
+// Update the addCannedResponse function
 window.addCannedResponse = async function(itemId, itemName) {
     const responseInput = document.getElementById(`response-input-${itemId}`);
     if (!responseInput || !responseInput.value.trim()) return;
@@ -1407,13 +1407,13 @@ window.addCannedResponse = async function(itemId, itemName) {
 
         if (data.success) {
             responseInput.value = '';
-            // Refresh the search to show the new response
-            setupAdminTools();
+            // Refresh the search results
+            handleItemSearch();  // This will refresh the search results
         } else {
             alert('Failed to add response: ' + (data.message || 'Unknown error'));
         }
     } catch (error) {
-        handleError(error, 'addCannedResponse');
+        console.error('Error in addCannedResponse:', error);
         alert('Error adding response. Please try again.');
     }
 };
@@ -1429,51 +1429,46 @@ function displayAuctionItems(items) {
     // Create category containers
     const categoryContainers = {};
     items.forEach(item => {
-        // Make sure category exists and has a value
         const category = (item.category && item.category.trim()) || 'Uncategorized';
         
-        // Create category section if it doesn't exist
         if (!categoryContainers[category]) {
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'category-section';
-            categoryDiv.innerHTML = `<h2>${escapeHtml(category)}</h2>`;
+            
+            // Add category header with item count
+            const itemCount = items.filter(i => 
+                (i.category && i.category.trim()) || 'Uncategorized'
+            ).length;
+            
+            categoryDiv.innerHTML = `
+                <h2>${escapeHtml(category)} (${itemCount} items)</h2>
+                <button class="show-items-btn" onclick="showCategoryItems(this, '${escapeHtml(category)}')">
+                    Show Items
+                </button>
+            `;
+            
+            // Create and hide the items container
             categoryContainers[category] = document.createElement('div');
             categoryContainers[category].className = 'category-items';
+            categoryContainers[category].style.display = 'none';
             categoryDiv.appendChild(categoryContainers[category]);
             container.appendChild(categoryDiv);
         }
 
-        // Create item element
-        const itemElement = document.createElement('div');
-        itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
-        
-        // Get filtered images array
-        const images = [item.image1, item.image2, item.image3].filter(img => img);
-        const primaryImage = images[0] || './images/AuctionDefault.png';
-
-        itemElement.innerHTML = `
-            <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
-                ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
-            </div>
-            <img src="${primaryImage}" 
-                 alt="${escapeHtml(item.name)}" 
-                 class="thumbnail" 
-                 onerror="this.src='./images/AuctionDefault.png'"
-                 onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
-            <h3>${escapeHtml(item.name)}</h3>
-            <p>Current Bid: $${item.highestBid || item.startingBid}</p>
-            <p>Total Bids: ${item.totBids || 0}</p>
-            ${item.biddingActive ? `
-                <button onclick="openBidModal('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.id})">
-                    Place Bid
-                </button>
-            ` : ''}
-        `;
-        
-        // Add item to its category container
+        // Add item to its category container (but container is hidden)
+        const itemElement = createItemElement(item);
         categoryContainers[category].appendChild(itemElement);
     });
 }
+
+// Add this function to handle showing items
+window.showCategoryItems = function(button, category) {
+    const itemsContainer = button.parentElement.querySelector('.category-items');
+    if (itemsContainer) {
+        itemsContainer.style.display = 'grid';
+        button.style.display = 'none';
+    }
+};
 
 // Update initializeAdminChatSessions function
 async function initializeAdminChatSessions() {
@@ -1649,7 +1644,7 @@ async function loadAuctionItems() {
         const items = await response.json();
         
         if (Array.isArray(items)) {
-            displayAuctionItems(items);
+            displayWelcomePage();
         } else {
             console.error('Invalid items data received:', items);
         }
@@ -1744,5 +1739,37 @@ function displayItemsInCategory(category, items) {
         
         categoryContainer.appendChild(itemElement);
     });
+}
+
+function displayWelcomePage() {
+    const container = document.getElementById('auction-items-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="welcome-section">
+            <h1>Welcome to the Online Auction</h1>
+            
+            <div class="welcome-content">
+                <h2>How It Works</h2>
+                <p>Our online auction platform makes it easy to participate and bid on items you're interested in. 
+                   Browse through different categories, view detailed item information, and place your bids.</p>
+                
+                <h2>Chat Support</h2>
+                <p>Need help? Use our chat feature to:</p>
+                <ul>
+                    <li>Ask questions about specific items</li>
+                    <li>Get assistance with bidding</li>
+                    <li>Receive real-time support from our team</li>
+                </ul>
+
+                <h2>Ready to Start?</h2>
+                <p>Click below to view available items and start bidding!</p>
+                
+                <button class="primary-button" onclick="loadAuctionItems()">
+                    View Auction Items
+                </button>
+            </div>
+        </div>
+    `;
 }
 
