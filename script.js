@@ -291,8 +291,8 @@ function checkSessionAndLoadView() {
         // Display admin badge
         displayAdminBadge(adminType);
 
-        // Load categories
-        loadAuctionItems();
+        // Show welcome page instead of loading items directly
+        displayWelcomePage();
     } else {
         // No valid session, show login
         document.getElementById('login').style.display = 'block';
@@ -1219,7 +1219,7 @@ function displayWelcomePage() {
                 <h2>Ready to Start?</h2>
                 <p>Click below to view available items and start bidding!</p>
                 
-                <button class="primary-button" onclick="window.location.reload()">
+                <button class="primary-button" onclick="loadAuctionItems()">
                     View Auction Items
                 </button>
             </div>
