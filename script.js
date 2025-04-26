@@ -234,56 +234,6 @@ async function handleLoginSuccess(result, loginEmail) {
     }
 }
 
-// Update the login form submission handler
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    showSpinner();
-    
-    const loginEmail = document.getElementById('login-email');
-    const loginPassword = document.getElementById('login-password');
-    const loginError = document.getElementById('login-error');
-    
-    if (!loginEmail || !loginPassword) {
-        console.error('Login form elements not found');
-        hideSpinner();
-        return;
-    }
-
-    try {
-        // Hash the password before sending
-        const hashedPassword = btoa(loginPassword.value);
-        const params = new URLSearchParams({
-            action: 'loginUser',
-            email: loginEmail.value,
-            password: hashedPassword
-        });
-
-        const response = await fetch(`${scriptURL}?${params.toString()}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = await response.json();
-
-        if (result.success) {
-            handleLoginSuccess(result, loginEmail);
-            if (loginError) loginError.style.display = 'none';
-        } else {
-            if (loginError) {
-                loginError.textContent = result.message || 'Invalid email or password';
-                loginError.style.display = 'block';
-            }
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        if (loginError) {
-            loginError.textContent = 'An error occurred during login';
-            loginError.style.display = 'block';
-        }
-    } finally {
-        hideSpinner();
-    }
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     // Remove these lines since they're duplicated
     // const addItemModal = document.getElementById('add-item-modal');
@@ -295,16 +245,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('image-modal').style.display = 'none';
     document.getElementById('bid-modal').style.display = 'none';
     
-    // Get form elements
+    // Get login form reference
     const loginForm = document.getElementById('login-form');
-    const registrationForm = document.getElementById('registration-form');
-    
-    if (!loginForm || !registrationForm) {
-        console.error('Login or registration form not found');
+    if (!loginForm) {
+        console.error('Login form not found');
         return;
     }
 
-    // Handle login form submission
+    // Add login form submission handler
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         showSpinner();
@@ -355,67 +303,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Update registration form submission
-    registrationForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showSpinner();
-        
-        const regEmail = document.getElementById('reg-email');
-        const regPassword = document.getElementById('reg-password');
-        const regFirstName = document.getElementById('reg-firstName');
-        const regLastName = document.getElementById('reg-lastName');
-        
-        if (!regEmail || !regPassword || !regFirstName || !regLastName) {
-            console.error('Required registration elements not found');
-            hideSpinner();
-            return;
-        }
-
-        try {
-            const hashedPassword = btoa(regPassword.value);
-            const params = new URLSearchParams({
-                action: 'registerUser',
-                email: regEmail.value,
-                password: hashedPassword,
-                firstName: regFirstName.value,
-                lastName: regLastName.value,
-                // Add any additional registration fields here
-            });
-
-            const response = await fetch(`${scriptURL}?${params.toString()}`);
-            const data = await response.json();
+    const registrationForm = document.getElementById('registration-form');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showSpinner();
             
-            if (data.success) {
-                // Store user info including admin status
-                localStorage.setItem('userEmail', regEmail.value);
-                localStorage.setItem('sessionToken', data.token);
-                localStorage.setItem('adminType', data.adminType || 'user');
-                localStorage.setItem('firstName', regFirstName.value);
-                localStorage.setItem('lastName', regLastName.value);
-                
-                // Update UI
-                document.getElementById('login').style.display = 'none';
-                document.getElementById('registration').style.display = 'none';
-                document.getElementById('auction-items').style.display = 'block';
-                document.getElementById('chat').style.display = 'block';
-                
-                // Set welcome message
-                const welcomeMessage = document.getElementById('welcome-message');
-                welcomeMessage.textContent = `Welcome, ${regFirstName.value} ${regLastName.value.charAt(0)}!`;
-                welcomeMessage.style.display = 'block';
-                
-                // Initialize chat and load items
-                await loadAuctionItems();
-                initializeChat();
-            } else {
-                alert(data.message || 'Registration failed');
+            const regEmail = document.getElementById('reg-email');
+            const regPassword = document.getElementById('reg-password');
+            const regFirstName = document.getElementById('reg-firstName');
+            const regLastName = document.getElementById('reg-lastName');
+            
+            if (!regEmail || !regPassword || !regFirstName || !regLastName) {
+                console.error('Required registration elements not found');
+                hideSpinner();
+                return;
             }
-        } catch (error) {
-            console.error('Registration error:', error);
-            alert('Registration failed. Please try again.');
-        } finally {
-            hideSpinner();
-        }
-    });
+
+            try {
+                const hashedPassword = btoa(regPassword.value);
+                const params = new URLSearchParams({
+                    action: 'registerUser',
+                    email: regEmail.value,
+                    password: hashedPassword,
+                    firstName: regFirstName.value,
+                    lastName: regLastName.value,
+                    // Add any additional registration fields here
+                });
+
+                const response = await fetch(`${scriptURL}?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store user info including admin status
+                    localStorage.setItem('userEmail', regEmail.value);
+                    localStorage.setItem('sessionToken', data.token);
+                    localStorage.setItem('adminType', data.adminType || 'user');
+                    localStorage.setItem('firstName', regFirstName.value);
+                    localStorage.setItem('lastName', regLastName.value);
+                    
+                    // Update UI
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('registration').style.display = 'none';
+                    document.getElementById('auction-items').style.display = 'block';
+                    document.getElementById('chat').style.display = 'block';
+                    
+                    // Set welcome message
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    welcomeMessage.textContent = `Welcome, ${regFirstName.value} ${regLastName.value.charAt(0)}!`;
+                    welcomeMessage.style.display = 'block';
+                    
+                    // Initialize chat and load items
+                    await loadAuctionItems();
+                    initializeChat();
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
 
     const itemForm = document.getElementById('itemForm');   
     const chatInput = document.getElementById('chat-input');
