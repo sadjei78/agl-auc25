@@ -3,12 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://*.firebaseio.com https://script.google.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.gstatic.com https://*.firebaseio.com 'unsafe-inline'; connect-src 'self' wss://*.firebaseio.com https://*.firebaseio.com https://script.google.com https://script.googleusercontent.com">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https://*.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://script.google.com wss://*.firebaseio.com;
+        style-src 'self' 'unsafe-inline';
+        script-src 'self' https://*.googleapis.com https://www.gstatic.com https://*.firebaseio.com 'unsafe-inline';
+        connect-src 'self' https://*.googleapis.com wss://*.firebaseio.com https://*.firebaseio.com https://script.google.com https://script.googleusercontent.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
+        img-src 'self' data: https: blob: https://*.gstatic.com;
+        frame-src 'self' https://*.firebaseapp.com https://s-usc1b-nss-2151.firebaseio.com/ https://*.firebaseio.com;">
     <title>AGLOW Silent Auction</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+    </script>
     <script src="firebase-config.js" type="module"></script>
     <script src="config.js" type="module"></script>
     <script src="chat.js" type="module"></script>

@@ -1,14 +1,48 @@
 {
   "rules": {
-    "chats": {
-      "$user_id": {
-        ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || $user_id === auth.uid.replace('.', '_'))",
-        ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || $user_id === auth.uid.replace('.', '_'))"
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()",
+        ".write": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()"
       }
+    },
+    "chat": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "activeUsers": {
+      ".read": true,
+      ".write": true,
+      "$user_id": {
+        ".read": true,
+        ".write": true,
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        "lastActive": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "messages": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$user_id": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "items": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
     },
     "admins": {
       ".read": "auth != null",
       ".write": false
+    },
+    "typing": {
+      ".read": true,
+      ".write": "auth != null"
     }
   }
-} 
+}
