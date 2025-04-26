@@ -226,8 +226,19 @@ async function handleLoginSuccess(result, loginEmail) {
         // Display admin badge
         displayAdminBadge(result.adminType);
 
-        // Load all auction items
-        await loadAuctionItems();
+        // Load auction items with categories
+        try {
+            showSpinner();
+            const response = await fetch(`${scriptURL}?action=getAuctionItems`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const items = await response.json();
+            
+            if (Array.isArray(items)) {
+                displayAuctionItems(items);  // This will create the proper category structure
+            }
+        } finally {
+            hideSpinner();
+        }
 
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
