@@ -376,6 +376,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const formData = new FormData(registrationForm);
+                // Hash the password before sending
+                const hashedPassword = await hashPassword(formData.get('password'));
+                formData.set('password', hashedPassword);
+                
                 const response = await fetch(`${scriptURL}?action=register`, {
                     method: 'POST',
                     body: formData
@@ -1267,4 +1271,66 @@ async function hashPassword(password) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+// Add bid modal functions
+window.openBidModal = function(itemName, currentBid, itemId) {
+    const modal = document.getElementById('bid-modal');
+    const itemNameElement = document.getElementById('bid-item-name');
+    const currentBidElement = document.getElementById('current-bid');
+    const bidInput = document.getElementById('bid-amount');
+    
+    if (modal && itemNameElement && currentBidElement && bidInput) {
+        itemNameElement.textContent = itemName;
+        currentBidElement.textContent = `Current Bid: $${currentBid}`;
+        bidInput.min = currentBid + 1;
+        bidInput.value = currentBid + 1;
+        modal.style.display = 'flex';
+        
+        // Store itemId for bid submission
+        modal.dataset.itemId = itemId;
+    }
+};
+
+window.closeBidModal = function() {
+    const modal = document.getElementById('bid-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        delete modal.dataset.itemId;
+    }
+};
+
+// Add bid form handler
+document.getElementById('bid-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const modal = document.getElementById('bid-modal');
+    const itemId = modal.dataset.itemId;
+    const bidAmount = document.getElementById('bid-amount').value;
+    
+    try {
+        const email = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('sessionToken');
+        
+        const params = new URLSearchParams({
+            action: 'placeBid',
+            email: email,
+            token: token,
+            itemId: itemId,
+            bidAmount: bidAmount
+        });
+
+        const response = await fetch(`${scriptURL}?${params.toString()}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            showErrorMessage('Bid placed successfully!', 'success');
+            closeBidModal();
+            await loadInitialCategories(); // Refresh items
+        } else {
+            throw new Error(result.error || 'Failed to place bid');
+        }
+    } catch (error) {
+        console.error('Error placing bid:', error);
+        showErrorMessage(`Failed to place bid: ${error.message}`);
+    }
+});
 
