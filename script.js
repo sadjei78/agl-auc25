@@ -320,23 +320,21 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(`${scriptURL}?action=login&email=${encodeURIComponent(loginEmail.value)}&password=${encodeURIComponent(loginPassword.value)}`);
                 
-                // Check if response is ok before trying to parse JSON
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                // Try to parse the response
+                // Get the response text first
+                const responseText = await response.text();
+                
+                // Try to parse it as JSON
                 let result;
                 try {
-                    result = await response.json();
+                    result = JSON.parse(responseText);
                 } catch (parseError) {
-                    console.error('Failed to parse response:', await response.text());
+                    console.error('Server response:', responseText);
                     throw new Error('Invalid server response');
                 }
                 
                 if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
-                    await loadInitialCategories();  // Changed from loadAuctionItems to loadInitialCategories
+                    await loadInitialCategories();
                 } else {
                     loginError.textContent = result.error || 'Login failed';
                     loginError.style.display = 'block';
