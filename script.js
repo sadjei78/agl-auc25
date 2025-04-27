@@ -1368,3 +1368,17 @@ document.getElementById('bid-form')?.addEventListener('submit', async (e) => {
     }
 });
 
+// Define changeImage function
+window.changeImage = function(direction) {
+    if (!currentImages || currentImages.length === 0) return;
+
+    // Update the current image index
+    currentImageIndex = (currentImageIndex + direction + currentImages.length) % currentImages.length;
+
+    // Update the modal image source
+    const modalImage = document.getElementById("modal-image");
+    if (modalImage) {
+        modalImage.src = currentImages[currentImageIndex];
+    }
+};
+
