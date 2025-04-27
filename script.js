@@ -1448,3 +1448,9 @@ function handleInvalidToken() {
     logout(); // Clear local storage and redirect to login
 }
 
+function isTokenValid() {
+    const token = localStorage.getItem('sessionToken');
+    // Add logic to validate token, e.g., check expiry
+    return token !== null; // Simplified check
+}
+
