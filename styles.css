@@ -1618,7 +1618,7 @@ button[type="submit"]:hover,
 }
 
 #chat-input {
-    flex: 1;
+    flex: 2;
     padding: 8px;
     margin-right: 10px;
     border: 1px solid #ddd;
