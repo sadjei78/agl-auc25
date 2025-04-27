@@ -1389,7 +1389,7 @@ function displayItemsInCategory(category, items) {
                  class="thumbnail" 
                  onerror="this.src='./images/AuctionDefault.png'"
                  onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
-            <h3>${escapeHtml(item.name)}</h3>
+            <h4>${escapeHtml(item.name)}</h4>   
             <p>Current Bid: $${item.highestBid || item.startingBid}</p>
             <p>Total Bids: ${item.totBids || 0}</p>
             ${item.biddingActive ? `
