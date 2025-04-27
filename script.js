@@ -1362,7 +1362,17 @@ function displayItemsInCategory(category, items) {
         return;
     }
 
+    // Clear container but keep the loading spinner if it exists
+    const loadingSpinner = categoryContainer.querySelector('.category-loading');
     categoryContainer.innerHTML = '';
+    if (loadingSpinner) {
+        categoryContainer.appendChild(loadingSpinner);
+    }
+
+    // Create items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'category-items';
+
     items.forEach(item => {
         const itemElement = document.createElement('div');
         itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
@@ -1389,7 +1399,9 @@ function displayItemsInCategory(category, items) {
             ` : ''}
         `;
         
-        categoryContainer.appendChild(itemElement);
+        itemsContainer.appendChild(itemElement);
     });
+
+    categoryContainer.appendChild(itemsContainer);
 }
 
