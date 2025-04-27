@@ -420,27 +420,15 @@ class Chat {
     }
 
     async loadActiveUsers() {
-        const email = localStorage.getItem('userEmail');
-        const token = localStorage.getItem('sessionToken');
+        if (!this.activeUsersRef) return;
         
-        if (!email || !token) return;
-
-        try {
-            const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
-            const data = await response.json();
-            
-            // Handle both possible response formats
-            const users = data.success ? (data.activeUsers || data.users || []) : [];
-            
-            if (Array.isArray(users)) {
-                this.displayActiveUsers(users);
-            } else {
-                console.error('Invalid users data format:', data);
+        // Use the existing Firebase listener instead of fetch
+        onValue(this.activeUsersRef, (snapshot) => {
+            const users = snapshot.val() || {};
+            if (this.isAdmin) {
+                this.displayActiveUsers(Object.values(users));
             }
-        } catch (error) {
-            console.error('Error loading active users:', error);
-            // Don't throw the error to prevent breaking the polling
-        }
+        });
     }
 
     startPolling() {

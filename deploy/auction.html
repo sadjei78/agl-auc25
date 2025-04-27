@@ -91,7 +91,7 @@
             <div id="auction-items-container"></div>
         </section>
 
-        <section id="chat">
+        <section id="chat" class="chat-section" style="display: none;">
             <h2 id="chat-title">Chat</h2>
             
             <!-- Admin session buttons -->
@@ -106,14 +106,14 @@
                 <span class="typing-user"></span> is typing...
             </div>
 
-            <!-- Chat messages for all users -->
-            <div id="chat-messages"></div>
-
-            <div id="chat-input-area">
-                <textarea id="chat-input" placeholder="Select a user to start chatting..." disabled></textarea>
-                <button id="send-message" disabled>Send</button>
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages"></div>
+                <form id="chat-form" class="chat-form">
+                    <input type="text" id="chat-input" placeholder="Type your message..." disabled>
+                    <button type="submit" id="send-message" disabled>Send</button>
+                </form>
             </div>
-            
+
             <button id="load-all-history">Load All History</button>
 
             <!-- Move search panel here, below chat -->
