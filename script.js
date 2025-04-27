@@ -1374,31 +1374,64 @@ function displayItemsInCategory(category, items) {
     itemsContainer.className = 'category-items';
 
     items.forEach(item => {
-        console.log('Processing item:', item);  // Add this line
         const itemElement = document.createElement('div');
         itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
         
         const images = [item.image1, item.image2, item.image3].filter(img => img);
         const primaryImage = images[0] || './images/AuctionDefault.png';
 
-        itemElement.innerHTML = `
+        // Create the image element separately
+        const imgElement = document.createElement('img');
+        imgElement.src = primaryImage;
+        imgElement.alt = escapeHtml(item.name);
+        imgElement.className = 'thumbnail';
+        imgElement.onerror = () => { imgElement.src = './images/AuctionDefault.png'; };
+        
+        // Add click event listener to image
+        imgElement.addEventListener('click', () => {
+            openImageModal(
+                escapeHtml(item.name),
+                images,
+                escapeHtml(item.description),
+                item.highestBid || item.startingBid,
+                item.totBids || 0,
+                item.biddingActive
+            );
+        });
+
+        // Create the rest of the item content
+        const itemContent = document.createElement('div');
+        itemContent.innerHTML = `
             <div class="bidding-status ${item.biddingActive ? 'active' : 'inactive'}">
                 ${item.biddingActive ? 'Bidding Open' : 'Bidding Closed'}
             </div>
-            <img src="${primaryImage}" 
-                 alt="${escapeHtml(item.name)}" 
-                 class="thumbnail" 
-                 onerror="this.src='./images/AuctionDefault.png'"
-                 onclick="openImageModal('${escapeHtml(item.name)}', ${JSON.stringify(images)}, '${escapeHtml(item.description)}', ${item.highestBid || item.startingBid}, ${item.totBids || 0}, ${item.biddingActive})">
-            <h4>${escapeHtml(item.name)}</h4>   
+            <h4>${escapeHtml(item.name)}</h4>
             <p>Current Bid: $${item.highestBid || item.startingBid}</p>
             <p>Total Bids: ${item.totBids || 0}</p>
-            ${item.biddingActive ? `
-                <button onclick="openBidModal('${escapeHtml(item.name)}', ${item.highestBid || item.startingBid}, ${item.id})">
-                    Place Bid
-                </button>
-            ` : ''}
         `;
+
+        // Add bid button if active
+        if (item.biddingActive) {
+            const bidButton = document.createElement('button');
+            bidButton.textContent = 'Place Bid';
+            bidButton.addEventListener('click', () => {
+                openBidModal(
+                    escapeHtml(item.name),
+                    item.highestBid || item.startingBid,
+                    item.id
+                );
+            });
+            itemContent.appendChild(bidButton);
+        }
+
+        // Assemble the item element
+        itemElement.appendChild(itemContent.querySelector('.bidding-status'));
+        itemElement.appendChild(imgElement);
+        Array.from(itemContent.children).forEach(child => {
+            if (child.className !== 'bidding-status') {
+                itemElement.appendChild(child);
+            }
+        });
         
         itemsContainer.appendChild(itemElement);
     });
