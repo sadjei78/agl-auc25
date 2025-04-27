@@ -275,7 +275,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
-            // ... existing login form handler code ...
+            e.preventDefault();
+            showSpinner();
+            
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            const loginError = document.getElementById('login-error');
+            
+            try {
+                // Hash the password before sending
+                const hashedPassword = await hashPassword(loginPassword.value);
+                
+                // Construct URL with proper parameters
+                const params = new URLSearchParams();
+                params.append('action', 'login');
+                params.append('email', loginEmail.value);
+                params.append('password', hashedPassword);
+
+                const response = await fetch(`${scriptURL}?${params}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    await handleLoginSuccess(result, loginEmail);
+                } else {
+                    loginError.textContent = result.error || 'Login failed';
+                    loginError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                loginError.textContent = 'An error occurred during login. Please try again.';
+                loginError.style.display = 'block';
+            } finally {
+                hideSpinner();
+            }
         });
     }
 
@@ -293,7 +332,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const registrationForm = document.getElementById('registration-form');
     if (registrationForm) {
         registrationForm.addEventListener('submit', async (e) => {
-            // ... existing registration form handler code ...
+            e.preventDefault();
+            showSpinner();
+            
+            try {
+                // Get form values
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const firstName = document.getElementById('reg-firstName').value;
+                const lastName = document.getElementById('reg-lastName').value;
+                
+                // Hash the password
+                const hashedPassword = await hashPassword(password);
+                
+                // Construct URL parameters
+                const params = new URLSearchParams({
+                    action: 'register',
+                    email: email,
+                    password: hashedPassword,
+                    firstName: firstName,
+                    lastName: lastName
+                });
+
+                const response = await fetch(`${scriptURL}?${params.toString()}`);
+                const responseText = await response.text();
+                console.log('Server response:', responseText); // Debug log
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Server response:', responseText);
+                    throw new Error('Invalid server response');
+                }
+                
+                if (result.success) {
+                    document.getElementById('registration').style.display = 'none';
+                    document.getElementById('login').style.display = 'block';
+                    showErrorMessage('Registration successful! Please log in.', 'success');
+                } else {
+                    showErrorMessage(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showErrorMessage('An error occurred during registration');
+            } finally {
+                hideSpinner();
+            }
         });
     }
 });
