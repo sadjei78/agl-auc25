@@ -261,35 +261,49 @@ async function loadInitialCategories() {
 }
 
 // Update checkSessionAndLoadView function
-function checkSessionAndLoadView() {
+async function checkSessionAndLoadView() {
     const token = localStorage.getItem('sessionToken');
     const userEmail = localStorage.getItem('userEmail');
     const adminType = localStorage.getItem('adminType');
+    const firstName = localStorage.getItem('firstName');
 
     if (token && userEmail) {
-        // User is logged in
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('registration').style.display = 'none';
-        document.getElementById('auction-items').style.display = 'block';
-        document.getElementById('chat').style.display = 'block';
-        document.getElementById('bidding').style.display = 'block';  // Make sure bidding section is shown
+        try {
+            // Hide login/registration first
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('registration').style.display = 'none';
 
-        // Initialize chat
-        chat.initialize(userEmail, adminType === 'admin');
+            // Show main sections
+            document.getElementById('auction-items').style.display = 'block';
+            document.getElementById('chat').style.display = 'block';
+            document.getElementById('bidding').style.display = 'block';
 
-        // Setup admin features if admin
-        if (adminType === 'admin') {
-            initializeAdminTools();
-            document.getElementById('admin-badge').style.display = 'flex';
+            // Display welcome message
+            const welcomeMessage = document.getElementById('welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.textContent = `Welcome, ${firstName}!`;
+                welcomeMessage.style.display = 'block';
+            }
+
+            // Initialize chat
+            await chat.initialize(userEmail, adminType === 'admin');
+
+            // Setup admin features if admin
+            if (adminType === 'admin') {
+                initializeAdminTools();
+                const adminBadge = document.getElementById('admin-badge');
+                if (adminBadge) adminBadge.style.display = 'flex';
+            }
+
+            // Load auction items
+            await loadInitialCategories();
+
+        } catch (error) {
+            console.error('Error restoring session:', error);
+            // If something fails, reset to login state
+            localStorage.clear();
+            location.reload();
         }
-
-        // Display admin badge and welcome message
-        displayAdminBadge(adminType);
-        document.getElementById('welcome-message').textContent = `Welcome, ${localStorage.getItem('firstName')}!`;
-        document.getElementById('welcome-message').style.display = 'block';
-
-        // Load auction items
-        loadInitialCategories();  // Make sure items are loaded
     } else {
         // No valid session, show login
         document.getElementById('login').style.display = 'block';
@@ -301,123 +315,6 @@ function checkSessionAndLoadView() {
         document.getElementById('welcome-message').style.display = 'none';
     }
 }
-
-// Update the DOMContentLoaded event listener to include login/registration handlers
-document.addEventListener('DOMContentLoaded', () => {
-    checkSessionAndLoadView();  // Keep existing session check
-
-    // Add login form handler
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
-            
-            const loginEmail = document.getElementById('login-email');
-            const loginPassword = document.getElementById('login-password');
-            const loginError = document.getElementById('login-error');
-            
-            try {
-                // Hash the password before sending
-                const hashedPassword = await hashPassword(loginPassword.value);
-                
-                // Construct URL with proper parameters
-                const params = new URLSearchParams();
-                params.append('action', 'login');
-                params.append('email', loginEmail.value);
-                params.append('password', hashedPassword);
-
-                const response = await fetch(`${scriptURL}?${params}`);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server response:', errorText);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    await handleLoginSuccess(result, loginEmail);
-                    await loadInitialCategories();
-                } else {
-                    loginError.textContent = result.error || 'Login failed';
-                    loginError.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                loginError.textContent = 'An error occurred during login. Please try again.';
-                loginError.style.display = 'block';
-            } finally {
-                hideSpinner();
-            }
-        });
-    }
-
-    // Add back the show registration link handler
-    const showRegistrationLink = document.getElementById('show-registration');
-    if (showRegistrationLink) {
-        showRegistrationLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('registration').style.display = 'block';
-        });
-    }
-
-    // Update registration form handler
-    const registrationForm = document.getElementById('registration-form');
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
-            
-            try {
-                // Get form values
-                const email = document.getElementById('reg-email').value;
-                const password = document.getElementById('reg-password').value;
-                const firstName = document.getElementById('reg-firstName').value;
-                const lastName = document.getElementById('reg-lastName').value;
-                
-                // Hash the password
-                const hashedPassword = await hashPassword(password);
-                
-                // Construct URL parameters
-                const params = new URLSearchParams({
-                    action: 'register',
-                    email: email,
-                    password: hashedPassword,
-                    firstName: firstName,
-                    lastName: lastName
-                });
-
-                const response = await fetch(`${scriptURL}?${params.toString()}`);
-                const responseText = await response.text();
-                console.log('Server response:', responseText); // Debug log
-                
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('Server response:', responseText);
-                    throw new Error('Invalid server response');
-                }
-                
-                if (result.success) {
-                    document.getElementById('registration').style.display = 'none';
-                    document.getElementById('login').style.display = 'block';
-                    showErrorMessage('Registration successful! Please log in.', 'success');
-                } else {
-                    showErrorMessage(result.error || 'Registration failed');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                showErrorMessage('An error occurred during registration');
-            } finally {
-                hideSpinner();
-            }
-        });
-    }
-});
 
 function initializeChat() {
     const userEmail = localStorage.getItem('userEmail');
