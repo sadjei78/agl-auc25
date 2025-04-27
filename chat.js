@@ -426,7 +426,7 @@ class Chat {
         if (!email || !token) return;
 
         try {
-            const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+            const response = await fetch(`${scriptURL}?action=getActiveUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
             const data = await response.json();
             
             // Handle both possible response formats
