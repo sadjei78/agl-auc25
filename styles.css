@@ -1667,3 +1667,18 @@ button[type="submit"]:hover,
     background: #f5f5f5;
     margin-right: auto;
 }
+
+/* Add version number styles */
+#version-number {
+    float: right;
+    color: #999;
+    margin-left: 20px;
+}
+
+footer p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+}

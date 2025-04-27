@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
-                    await loadAuctionItems();  // Load items after successful login
+                    await loadInitialCategories();  // Changed from loadAuctionItems to loadInitialCategories
                 } else {
                     loginError.textContent = result.error || 'Login failed';
                     loginError.style.display = 'block';
