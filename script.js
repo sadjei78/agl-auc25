@@ -302,10 +302,82 @@ function checkSessionAndLoadView() {
     }
 }
 
-// Make sure this is called when the page loads
+// Update the DOMContentLoaded event listener to include login/registration handlers
 document.addEventListener('DOMContentLoaded', () => {
-    checkSessionAndLoadView();  // Add this at the start of DOMContentLoaded
-    // ... rest of your DOMContentLoaded code ...
+    checkSessionAndLoadView();  // Keep existing session check
+
+    // Add login form handler
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showSpinner();
+            
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            const loginError = document.getElementById('login-error');
+            
+            try {
+                const response = await fetch(`${scriptURL}?action=login&email=${encodeURIComponent(loginEmail.value)}&password=${encodeURIComponent(loginPassword.value)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    await handleLoginSuccess(result, loginEmail);
+                    await loadAuctionItems();  // Load items after successful login
+                } else {
+                    loginError.textContent = result.error || 'Login failed';
+                    loginError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                loginError.textContent = 'An error occurred during login';
+                loginError.style.display = 'block';
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
+
+    // Add back the show registration link handler
+    const showRegistrationLink = document.getElementById('show-registration');
+    if (showRegistrationLink) {
+        showRegistrationLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('registration').style.display = 'block';
+        });
+    }
+
+    // Add registration form handler
+    const registrationForm = document.getElementById('registration-form');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showSpinner();
+            
+            try {
+                const formData = new FormData(registrationForm);
+                const response = await fetch(`${scriptURL}?action=register`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('registration').style.display = 'none';
+                    document.getElementById('login').style.display = 'block';
+                    showErrorMessage('Registration successful! Please log in.', 'success');
+                } else {
+                    showErrorMessage(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showErrorMessage('An error occurred during registration');
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
 });
 
 function initializeChat() {
