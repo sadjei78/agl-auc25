@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hashedPassword = await hashPassword(loginPassword.value);
                 
                 const params = new URLSearchParams();
-                params.append('action', 'login');
+                params.append('action', 'loginUser');
                 params.append('email', loginEmail.value);
                 params.append('password', hashedPassword);
 
