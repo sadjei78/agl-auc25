@@ -260,7 +260,7 @@ async function loadInitialCategories() {
     }
 }
 
-// Add this function to check session and load appropriate view
+// Update checkSessionAndLoadView function
 function checkSessionAndLoadView() {
     const token = localStorage.getItem('sessionToken');
     const userEmail = localStorage.getItem('userEmail');
@@ -272,429 +272,40 @@ function checkSessionAndLoadView() {
         document.getElementById('registration').style.display = 'none';
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
+        document.getElementById('bidding').style.display = 'block';  // Make sure bidding section is shown
 
-        // Initialize chat first
+        // Initialize chat
         chat.initialize(userEmail, adminType === 'admin');
 
         // Setup admin features if admin
         if (adminType === 'admin') {
             initializeAdminTools();
+            document.getElementById('admin-badge').style.display = 'flex';
         }
 
-        // Display admin badge
+        // Display admin badge and welcome message
         displayAdminBadge(adminType);
+        document.getElementById('welcome-message').textContent = `Welcome, ${localStorage.getItem('firstName')}!`;
+        document.getElementById('welcome-message').style.display = 'block';
 
-        // Show welcome page instead of loading items directly
-        displayWelcomePage();
+        // Load auction items
+        loadInitialCategories();  // Make sure items are loaded
     } else {
         // No valid session, show login
         document.getElementById('login').style.display = 'block';
         document.getElementById('registration').style.display = 'none';
         document.getElementById('auction-items').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
+        document.getElementById('bidding').style.display = 'none';
+        document.getElementById('admin-badge').style.display = 'none';
+        document.getElementById('welcome-message').style.display = 'none';
     }
 }
 
+// Make sure this is called when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Get all necessary DOM elements first
-    const loginSection = document.getElementById('login');
-    const loginForm = document.getElementById('login-form');
-    const loginEmail = document.getElementById('login-email');
-    const loginPassword = document.getElementById('login-password');
-    const loginError = document.getElementById('login-error');
-    const registrationSection = document.getElementById('registration');
-    const registrationForm = document.getElementById('registration-form');
-    const biddingSection = document.getElementById('bidding');
-    const auctionItemsSection = document.getElementById('auction-items');
-    const chatSection = document.getElementById('chat');
-    const adminBadge = document.getElementById('admin-badge');
-    const welcomeMessage = document.getElementById('welcome-message');
-    const addItemModal = document.getElementById('add-item-modal');
-    const imageModal = document.getElementById('image-modal');
-    const bidModal = document.getElementById('bid-modal');
-
-    // Check if we have the required elements
-    if (!loginForm) {
-        console.error('Login form not found');
-        return;
-    }
-
-    // Hide modals initially
-    if (addItemModal) addItemModal.style.display = 'none';
-    if (imageModal) imageModal.style.display = 'none';
-    if (bidModal) bidModal.style.display = 'none';
-
-    // Hide all sections except login initially
-    if (registrationSection) registrationSection.style.display = 'none';
-    if (biddingSection) biddingSection.style.display = 'none';
-    if (auctionItemsSection) auctionItemsSection.style.display = 'none';
-    if (chatSection) chatSection.style.display = 'none';
-    if (adminBadge) adminBadge.style.display = 'none';
-
-    // Check session and load appropriate view
-    checkSessionAndLoadView();
-
-    // Handle login form submission
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showSpinner();
-
-        if (!loginEmail || !loginPassword) {
-            console.error('Login form elements not found');
-            hideSpinner();
-            return;
-        }
-
-        try {
-            const hashedPassword = btoa(loginPassword.value);
-            const params = new URLSearchParams({
-                action: 'loginUser',
-                email: loginEmail.value,
-                password: hashedPassword
-            });
-
-            const response = await fetch(`${scriptURL}?${params.toString()}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const result = await response.json();
-
-            if (result.success) {
-                handleLoginSuccess(result, loginEmail);
-                if (loginError) loginError.style.display = 'none';
-            } else {
-                if (loginError) {
-                    loginError.textContent = result.message || 'Invalid email or password';
-                    loginError.style.display = 'block';
-                }
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            if (loginError) {
-                loginError.textContent = 'An error occurred during login';
-                loginError.style.display = 'block';
-            }
-        } finally {
-            hideSpinner();
-        }
-    });
-
-    // Handle registration form submission
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
-            
-            const regEmail = document.getElementById('reg-email');
-            const regPassword = document.getElementById('reg-password');
-            const regFirstName = document.getElementById('reg-firstName');
-            const regLastName = document.getElementById('reg-lastName');
-            
-            if (!regEmail || !regPassword || !regFirstName || !regLastName) {
-                console.error('Required registration elements not found');
-                hideSpinner();
-                return;
-            }
-
-            try {
-                const hashedPassword = btoa(regPassword.value);
-                const params = new URLSearchParams({
-                    action: 'registerUser',
-                    email: regEmail.value,
-                    password: hashedPassword,
-                    firstName: regFirstName.value,
-                    lastName: regLastName.value
-                });
-
-                const response = await fetch(`${scriptURL}?${params.toString()}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Store user info
-                    localStorage.setItem('userEmail', regEmail.value);
-                    localStorage.setItem('sessionToken', data.token);
-                    localStorage.setItem('adminType', data.adminType || 'user');
-                    localStorage.setItem('firstName', regFirstName.value);
-                    localStorage.setItem('lastName', regLastName.value);
-                    
-                    // Update UI
-                    document.getElementById('login').style.display = 'none';
-                    document.getElementById('registration').style.display = 'none';
-                    document.getElementById('auction-items').style.display = 'block';
-                    document.getElementById('chat').style.display = 'block';
-                    
-                    // Initialize chat
-                    chat.initialize(regEmail.value, data.adminType === 'admin');
-
-                    // Load all auction items
-                    await loadAuctionItems();
-                } else {
-                    alert(data.message || 'Registration failed');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Registration failed. Please try again.');
-            } finally {
-                hideSpinner();
-            }
-        });
-    }
-
-    const itemForm = document.getElementById('itemForm');   
-    const chatInput = document.getElementById('chat-input');
-    const chatWindow = document.getElementById('chat-window');
-
-    // Variable to store the logged-in user's email
-    let userEmail = '';
-
-    // Global variable to store admin status
-    let adminType = ''; // Variable to store the type of admin
-
-    // Hide all sections except login
-    registrationSection.style.display = 'none';
-    biddingSection.style.display = 'none';
-    auctionItemsSection.style.display = 'none';
-    chatSection.style.display = 'none';
-    adminBadge.style.display = 'none'; // Hide admin badge initially
-
-    // Handle item form submission
-    itemForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const itemName = document.getElementById('itemName').value;
-        const itemDescription = document.getElementById('itemDescription').value;
-        const itemImage1 = document.getElementById('itemImage1').value;
-        const itemImage2 = document.getElementById('itemImage2').value;
-        const itemImage3 = document.getElementById('itemImage3').value;
-
-        // Send item data to Google Sheets
-        fetch(scriptURL + '?action=addItem&itemName=' + encodeURIComponent(itemName) + '&itemImage1=' + encodeURIComponent(itemImage1) + '&itemImage2=' + encodeURIComponent(itemImage2) + '&itemImage3=' + encodeURIComponent(itemImage3) + '&itemDescription=' + encodeURIComponent(itemDescription))
-            .then(response => response.text())
-            .then(data => {
-                console.log(data); // Log success message
-                itemForm.reset(); // Clear the form
-            })
-            .catch(error => console.error('Error!', error.message));
-    });
-
-    // Handle chat message sending
-    document.getElementById('send-message').addEventListener('click', () => {
-        const message = chatInput.value;
-        const user = userEmail; // Replace with actual user identification logic
-
-        if (message) {
-            // Send chat message to Google Sheets
-            fetch(scriptURL + '?action=addChatMessage&user=' + encodeURIComponent(user) + '&message=' + encodeURIComponent(message))
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data); // Log success message
-                    const messageElement = document.createElement('div');
-                    messageElement.textContent = message;
-                    chatWindow.appendChild(messageElement);
-                    chatInput.value = ''; // Clear input
-                })
-                .catch(error => console.error('Error!', error.message));
-        }
-    });
-
-    // Show registration form when link is clicked
-    document.getElementById('show-registration').addEventListener('click', (event) => {
-        event.preventDefault();
-        loginSection.style.display = 'none'; // Hide login section
-        registrationSection.style.display = 'block'; // Show registration section
-    });
-
-    // Update the addAuctionItem function
-    function addAuctionItem(event) {
-        event.preventDefault();
-        const token = localStorage.getItem('sessionToken');
-        const email = localStorage.getItem('userEmail');
-        
-        if (!token || !email) {
-            console.error('No session token or email found');
-            alert('Please log in again to perform this action');
-            logout();
-            return;
-        }
-
-        const formData = {
-            itemName: document.getElementById('itemName').value,
-            itemDescription: document.getElementById('itemDescription').value,
-            itemImage1: document.getElementById('itemImage1').value,
-            itemImage2: document.getElementById('itemImage2').value,
-            itemImage3: document.getElementById('itemImage3').value,
-            category: document.getElementById('itemCategory').value,
-            startingBid: document.getElementById('startingBid').value,
-            email: email,
-            token: token,
-            action: 'addItem'
-        };
-
-        // Debug logging
-        console.log('Sending request with data:', formData);
-
-        // Convert formData to URL parameters
-        const params = new URLSearchParams();
-        Object.entries(formData).forEach(([key, value]) => {
-            params.append(key, value);
-        });
-
-        showSpinner();
-        fetch(`${scriptURL}?${params.toString()}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(data => {
-                console.log('Server response:', data);
-                if (data === 'unauthorized') {
-                    alert('You are not authorized to perform this action');
-                    logout();
-                    return;
-                }
-                alert('Item added successfully!');
-                closeAddItemModal();
-                loadAuctionItems(); // Refresh the items display
-            })
-            .catch(error => {
-                console.error('Error!', error);
-                alert('Failed to add item. Please try again.');
-            })
-            .finally(() => hideSpinner());
-    }
-
-    // Attach the function to the window object
-    window.addAuctionItem = addAuctionItem;
-
-    // Add carousel navigation function
-    window.changeImage = function(direction) {
-        if (currentImages.length <= 1) return;
-        
-        currentImageIndex = (currentImageIndex + direction + currentImages.length) % currentImages.length;
-        const modalImage = document.getElementById("modal-image");
-        modalImage.src = currentImages[currentImageIndex];
-    };
-
-    // Add the toggle function
-    window.toggleBiddingStatus = function(itemId, newStatus) {
-        showSpinner();
-        const token = localStorage.getItem('sessionToken');
-        const email = localStorage.getItem('userEmail');
-        
-        if (!token || !email) {
-            console.error('No session token or email found');
-            hideSpinner();
-            return;
-        }
-
-        fetch(`${scriptURL}?action=toggleBidding&itemId=${encodeURIComponent(itemId)}&status=${newStatus}&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)
-            .then(response => response.text())
-            .then(result => {
-                if (result === 'success') {
-                    loadAuctionItems();
-                    closeModal();
-                } else if (result === 'unauthorized') {
-                    alert('You are not authorized to perform this action');
-                    logout();
-                } else {
-                    alert('Failed to update bidding status');
-                }
-            })
-            .catch(error => {
-                console.error('Error toggling bidding status:', error);
-                alert('Error updating bidding status');
-            })
-            .finally(() => hideSpinner());
-    };
-
-    // Add these functions to handle the bid modal
-    window.openBidModal = function(itemName, currentBid, itemId) {
-        const modal = document.getElementById('bid-modal');
-        const bidItemName = document.getElementById('bid-item-name');
-        const currentBidDisplay = document.getElementById('current-bid');
-        const bidInput = document.getElementById('bid-amount');
-        
-        if (!modal || !bidItemName || !currentBidDisplay || !bidInput) {
-            console.error('Bid modal elements not found');
-            return;
-        }
-
-        bidItemName.textContent = itemName;
-        currentBidDisplay.textContent = `Current Bid: $${currentBid}`;
-        bidInput.value = '';
-        bidInput.min = currentBid + 1;
-        bidInput.placeholder = `Enter bid amount (min $${currentBid + 1})`;
-        
-        // Store itemId for use when submitting bid
-        modal.dataset.itemId = itemId;
-        
-        modal.style.display = "flex";
-    };
-
-    window.closeBidModal = function() {
-        const modal = document.getElementById('bid-modal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    };
-
-    window.submitBid = function() {
-        showSpinner();
-        const modal = document.getElementById('bid-modal');
-        const itemId = modal.dataset.itemId;
-        const bidAmount = document.getElementById('bid-amount').value;
-        const email = localStorage.getItem('userEmail');
-        
-        if (!email) {
-            hideSpinner();
-            alert('Please log in to place a bid');
-            return;
-        }
-        
-        fetch(`${scriptURL}?action=handleBid&itemId=${encodeURIComponent(itemId)}&bidAmount=${encodeURIComponent(bidAmount)}&email=${encodeURIComponent(email)}`)
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    closeBidModal();
-                    loadAuctionItems(); // Refresh the items display
-                }
-                alert(result.message);
-            })
-            .catch(error => {
-                console.error('Error placing bid:', error);
-                alert('There was an error placing your bid. Please try again.');
-            })
-            .finally(() => hideSpinner());
-    };
-
-    // Update the bid form submission
-    document.getElementById('bid-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        submitBid();
-    });
-
-    // Update the bid button creation in loadAuctionItems
-    function createBidButton(item) {
-        const bidButton = document.createElement('button');
-        bidButton.textContent = 'Place Bid';
-        bidButton.disabled = !item.biddingActive;
-        
-        const currentBid = item.highestBid || item.startingBid;
-        const minBid = currentBid + (item.bidIncrement || 1);
-        
-        bidButton.onclick = () => openBidModal(item.name, currentBid, item.id);
-        
-        return bidButton;
-    }
-
-    // Initialize chat when user is logged in
-    if (localStorage.getItem('userEmail')) {
-        initializeChat();
-    }
-
-    // Add this near the top of your script, outside any other functions
-    window.addEventListener('beforeunload', () => {
-        stopMessagePolling();
-    });
+    checkSessionAndLoadView();  // Add this at the start of DOMContentLoaded
+    // ... rest of your DOMContentLoaded code ...
 });
 
 function initializeChat() {
