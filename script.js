@@ -322,15 +322,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hashedPassword = await hashPassword(loginPassword.value);
                 
                 // Construct URL with proper parameters
-                const params = new URLSearchParams({
-                    action: 'login',
-                    email: loginEmail.value,
-                    password: hashedPassword
-                }).toString();
+                const params = new URLSearchParams();
+                params.append('action', 'login');
+                params.append('email', loginEmail.value);
+                params.append('password', hashedPassword);
 
                 const response = await fetch(`${scriptURL}?${params}`);
                 
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
