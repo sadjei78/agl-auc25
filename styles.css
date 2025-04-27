@@ -1536,3 +1536,55 @@ button[type="submit"]:hover,
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Bid Modal Styles */
+.modal-bid-info {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    font-size: 1.1em;
+}
+
+.modal-item-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+#bid-form {
+    margin-top: 20px;
+}
+
+#bid-form .form-group {
+    margin-bottom: 15px;
+}
+
+#bid-form input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1.1em;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.secondary-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.secondary-button:hover {
+    background-color: #5a6268;
+}
