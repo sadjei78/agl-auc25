@@ -211,24 +211,24 @@ function initializeAdminTools() {
 async function handleLoginSuccess(result, loginEmail) {
     try {
         // Store user data in localStorage
-        localStorage.setItem('sessionToken', result.token);
-        localStorage.setItem('userEmail', loginEmail.value);
-        localStorage.setItem('firstName', result.firstName);
-        localStorage.setItem('lastName', result.lastName);
-        localStorage.setItem('adminType', result.adminType || 'user');
-
+    localStorage.setItem('sessionToken', result.token);
+    localStorage.setItem('userEmail', loginEmail.value);
+    localStorage.setItem('firstName', result.firstName);
+    localStorage.setItem('lastName', result.lastName);
+    localStorage.setItem('adminType', result.adminType || 'user');
+    
         // Update UI visibility
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('registration').style.display = 'none';
-        document.getElementById('auction-items').style.display = 'block';
-        document.getElementById('chat').style.display = 'block';
-
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('registration').style.display = 'none';
+    document.getElementById('auction-items').style.display = 'block';
+    document.getElementById('chat').style.display = 'block';
+    
         // Initialize chat first
         await chat.initialize(loginEmail.value, result.adminType === 'admin');
 
         // Setup admin features if admin
         if (result.adminType === 'admin') {
-            initializeAdminTools();
+        initializeAdminTools();
             const adminBadge = document.getElementById('admin-badge');
             if (adminBadge) adminBadge.style.display = 'flex';
         }
@@ -274,13 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup login form handler
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
-            
-            const loginEmail = document.getElementById('login-email');
-            const loginPassword = document.getElementById('login-password');
-            const loginError = document.getElementById('login-error');
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showSpinner();
+        
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const loginError = document.getElementById('login-error');
             
             try {
                 const hashedPassword = await hashPassword(loginPassword.value);
@@ -292,11 +292,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const response = await fetch(`${scriptURL}?${params}`);
                 
-                if (!response.ok) {
+            if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Server response:', errorText);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
                 let result;
                 try {
@@ -306,21 +306,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Non-JSON response:', errorText);
                     throw new Error('Invalid server response');
                 }
-                
-                if (result.success) {
+
+            if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
-                } else {
+            } else {
                     loginError.textContent = result.error || 'Login failed';
                     loginError.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Login error:', error);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
                 loginError.textContent = 'An error occurred during login. Please try again.';
                 loginError.style.display = 'block';
-            } finally {
-                hideSpinner();
-            }
-        });
+        } finally {
+            hideSpinner();
+        }
+    });
     }
 
     // Setup registration link handler
@@ -336,10 +336,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup registration form handler
     const registrationForm = document.getElementById('registration-form');
     if (registrationForm) {
-        registrationForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showSpinner();
-            
+    registrationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showSpinner();
+        
             try {
                 // Get form values
                 const email = document.getElementById('reg-email').value;
@@ -351,15 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hashedPassword = await hashPassword(password);
                 
                 // Construct URL parameters
-                const params = new URLSearchParams({
+            const params = new URLSearchParams({
                     action: 'register',
                     email: email,
-                    password: hashedPassword,
+                password: hashedPassword,
                     firstName: firstName,
                     lastName: lastName
-                });
+            });
 
-                const response = await fetch(`${scriptURL}?${params.toString()}`);
+            const response = await fetch(`${scriptURL}?${params.toString()}`);
                 const responseText = await response.text();
                 console.log('Server response:', responseText); // Debug log
                 
@@ -372,25 +372,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 if (result.success) {
-                    document.getElementById('registration').style.display = 'none';
+                document.getElementById('registration').style.display = 'none';
                     document.getElementById('login').style.display = 'block';
                     showErrorMessage('Registration successful! Please log in.', 'success');
-                } else {
+            } else {
                     showErrorMessage(result.error || 'Registration failed');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                showErrorMessage('An error occurred during registration');
-            } finally {
-                hideSpinner();
             }
-        });
+        } catch (error) {
+            console.error('Registration error:', error);
+                showErrorMessage('An error occurred during registration');
+        } finally {
+            hideSpinner();
+        }
+    });
     }
 });
 
 // Update checkSessionAndLoadView function
 async function checkSessionAndLoadView() {
-    const token = localStorage.getItem('sessionToken');
+        const token = localStorage.getItem('sessionToken');
     const userEmail = localStorage.getItem('userEmail');
     const adminType = localStorage.getItem('adminType');
     const firstName = localStorage.getItem('firstName');
@@ -427,7 +427,7 @@ async function checkSessionAndLoadView() {
                 const adminBadge = document.getElementById('admin-badge');
                 if (adminBadge) adminBadge.style.display = 'flex';
             }
-
+            
             // Load auction items
             await loadAuctionItems();
 
@@ -436,7 +436,7 @@ async function checkSessionAndLoadView() {
             localStorage.clear();
             location.reload();
         }
-    } else {
+                } else {
         // No valid session, show only login form
         document.getElementById('login').style.display = 'block';
     }
@@ -830,7 +830,7 @@ function startActiveSessionPolling() {
     
     // Start new polling with a slight delay to ensure chat is fully initialized
     setTimeout(() => {
-        loadActiveUsers(); // Initial load
+    loadActiveUsers(); // Initial load
         activeSessionPollingInterval = setInterval(() => {
             if (localStorage.getItem('sessionToken')) {  // Only poll if logged in
                 loadActiveUsers();
@@ -1386,4 +1386,39 @@ window.changeImage = function(direction) {
         modalImage.src = currentImages[currentImageIndex];
     }
 };
+
+function logout() {
+    localStorage.removeItem('sessionToken');
+    localStorage.removeItem('userEmail');
+    // ... other user data ...
+    location.reload(); // Refresh the page to reset the state
+}
+
+async function fetchProtectedResource() {
+    try {
+        const token = localStorage.getItem('sessionToken');
+        const response = await fetch('/protected-resource', {
+            headers: { 'Authorization': token }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token is invalid or expired
+                handleInvalidToken();
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+        // Process the data
+    } catch (error) {
+        console.error('Error fetching resource:', error);
+    }
+}
+
+function handleInvalidToken() {
+    alert('Session expired. Please log in again.');
+    logout(); // Clear local storage and redirect to login
+}
 
