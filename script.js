@@ -1510,3 +1510,50 @@ function showErrorMessage(message) {
     }, 5000);
 }
 
+async function submitItem(formData) {
+    try {
+        showSpinner();
+        const email = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('sessionToken');
+        
+        if (!email || !token) {
+            throw new Error('Authentication required');
+        }
+
+        const params = new URLSearchParams({
+            action: 'addAuctionItem',
+            email: email,
+            token: token,
+            ...Object.fromEntries(formData)
+        });
+
+        const response = await fetch(`${scriptURL}?${params.toString()}`, {
+            method: 'GET',  // Using GET since POST might have CORS issues
+            headers: {
+                'Accept': 'application/json'
+            },
+            mode: 'cors'  // Add this line
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            closeAddItemModal();
+            showErrorMessage('Item added successfully!', 'success');
+            // Refresh items display
+            await loadInitialCategories();
+        } else {
+            throw new Error(result.error || 'Failed to add item');
+        }
+    } catch (error) {
+        console.error('Error submitting item:', error);
+        showErrorMessage(`Failed to add item: ${error.message}`);
+    } finally {
+        hideSpinner();
+    }
+}
+
