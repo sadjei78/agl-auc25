@@ -283,10 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const loginError = document.getElementById('login-error');
             
             try {
-                // Hash the password before sending
                 const hashedPassword = await hashPassword(loginPassword.value);
                 
-                // Construct URL with proper parameters
                 const params = new URLSearchParams();
                 params.append('action', 'login');
                 params.append('email', loginEmail.value);
@@ -300,7 +298,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    const errorText = await response.text();
+                    console.error('Non-JSON response:', errorText);
+                    throw new Error('Invalid server response');
+                }
                 
                 if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
