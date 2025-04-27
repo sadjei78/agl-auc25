@@ -9,6 +9,7 @@ class Chat {
         this.currentChatUser = null;
         this.unreadCounts = {};
         this.messageListener = null;
+        this.listeners = new Map(); // Add this to track listeners
     }
 
     initialize(userEmail, isAdmin) {
@@ -206,19 +207,25 @@ class Chat {
     }
 
     listenForMessages() {
-        // For users, only listen to their own messages
         const chatPath = this.isAdmin && this.currentChatUser 
             ? `messages/${this.sanitizeEmailForPath(this.currentChatUser)}`
             : `messages/${this.sanitizeEmailForPath(this.currentUser)}`;
             
-        // Remove any existing listeners before adding new ones
+        // Remove any existing listeners
+        if (this.listeners.has(chatPath)) {
+            this.listeners.get(chatPath)();
+            this.listeners.delete(chatPath);
+        }
+
         const chatRef = ref(database, chatPath);
-        onValue(chatRef, (snapshot) => {
+        const unsubscribe = onValue(chatRef, (snapshot) => {
             const messages = snapshot.val();
             if (messages) {
                 this.displayMessages(messages);
             }
         });
+
+        this.listeners.set(chatPath, unsubscribe);
     }
 
     displayMessage(msg) {
@@ -419,7 +426,6 @@ class Chat {
         if (!email || !token) return;
 
         try {
-            // Use getChatMessages instead of getAdminChatUsers
             const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
             const data = await response.json();
             
@@ -460,6 +466,15 @@ class Chat {
             button.onclick = () => this.selectChatSession(user.email);
             this.sessionButtons.appendChild(button);
         });
+    }
+
+    // Add cleanup method
+    cleanup() {
+        // Remove all Firebase listeners
+        this.listeners.forEach(listener => {
+            listener();
+        });
+        this.listeners.clear();
     }
 }
 

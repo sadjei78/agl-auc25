@@ -607,25 +607,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Add these functions to handle the bid modal
-    window.openBidModal = function(itemId, itemName, currentBid, minBid) {
+    window.openBidModal = function(itemName, currentBid, itemId) {
         const modal = document.getElementById('bid-modal');
-        const itemNameElem = document.getElementById('bid-item-name');
-        const currentBidInfo = document.getElementById('current-bid-info');
-        const minBidInfo = document.getElementById('minimum-bid-info');
+        const bidItemName = document.getElementById('bid-item-name');
+        const currentBidDisplay = document.getElementById('current-bid');
         const bidInput = document.getElementById('bid-amount');
         
-        // Store the item ID for the submit function
+        if (!modal || !bidItemName || !currentBidDisplay || !bidInput) {
+            console.error('Bid modal elements not found');
+            return;
+        }
+
+        bidItemName.textContent = itemName;
+        currentBidDisplay.textContent = `Current Bid: $${currentBid}`;
+        bidInput.value = '';
+        bidInput.min = currentBid + 1;
+        bidInput.placeholder = `Enter bid amount (min $${currentBid + 1})`;
+        
+        // Store itemId for use when submitting bid
         modal.dataset.itemId = itemId;
         
-        itemNameElem.textContent = `Item: ${itemName}`;
-        currentBidInfo.textContent = `Current Bid: $${currentBid}`;
-        minBidInfo.textContent = `Minimum Bid: $${minBid}`;
-        
-        // Set the minimum bid amount
-        bidInput.min = minBid;
-        bidInput.value = minBid;
-        
-        modal.style.display = 'flex';
+        modal.style.display = "flex";
     };
 
     window.closeBidModal = function() {
@@ -670,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentBid = item.highestBid || item.startingBid;
         const minBid = currentBid + (item.bidIncrement || 1);
         
-        bidButton.onclick = () => openBidModal(item.id, item.name, currentBid, minBid);
+        bidButton.onclick = () => openBidModal(item.name, currentBid, item.id);
         
         return bidButton;
     }
@@ -971,7 +973,7 @@ function loadAllChatHistory() {
         .finally(() => hideSpinner());
 }
 
-// Helper function to escape HTML
+// Add this utility function
 function escapeHtml(unsafe) {
     return unsafe
         .replace(/&/g, "&amp;")
@@ -1437,5 +1439,65 @@ function displayItemsInCategory(category, items) {
     });
 
     categoryContainer.appendChild(itemsContainer);
+}
+
+// Add this near the top with other window functions
+window.openImageModal = function(itemName, images, description, currentBid, totalBids, biddingActive) {
+    const modal = document.getElementById("image-modal");
+    const modalImage = document.getElementById("modal-image");
+    const modalItemName = document.getElementById("modal-item-name");
+    const modalDescription = document.getElementById("modal-description");
+    const modalBidInfo = document.getElementById("modal-bid-info");
+
+    if (!modal || !modalImage || !modalItemName || !modalDescription || !modalBidInfo) {
+        console.error('Modal elements not found');
+        return;
+    }
+
+    currentImages = Array.isArray(images) ? images : [];
+    currentImageIndex = 0;
+
+    modalItemName.textContent = itemName;
+    modalDescription.textContent = description;
+    modalBidInfo.innerHTML = `
+        Current Bid: $${currentBid}<br>
+        Total Bids: ${totalBids}<br>
+        Status: ${biddingActive ? 'Bidding Open' : 'Bidding Closed'}
+    `;
+
+    if (currentImages.length > 0) {
+        modalImage.src = currentImages[0];
+    } else {
+        modalImage.src = './images/AuctionDefault.png';
+    }
+
+    modal.style.display = "flex";
+};
+
+// Add at the top of the file after imports
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    showErrorMessage('An unexpected error occurred. Please try again.');
+});
+
+// Add this function if not already present
+function showErrorMessage(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'error-message';
+    errorContainer.textContent = message;
+    
+    // Remove any existing error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    
+    // Insert at the top of the main content
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        mainContent.insertBefore(errorContainer, mainContent.firstChild);
+    }
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        errorContainer.remove();
+    }, 5000);
 }
 
