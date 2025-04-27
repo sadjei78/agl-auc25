@@ -304,14 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-                let result;
-                try {
-                    result = await response.json();
-                } catch (jsonError) {
-                    const errorText = await response.text();
-                    console.error('Non-JSON response:', errorText);
-                    throw new Error('Invalid server response');
-                }
+                const result = await response.json();
                 
                 if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
