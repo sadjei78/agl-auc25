@@ -631,7 +631,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.closeBidModal = function() {
-        document.getElementById('bid-modal').style.display = 'none';
+        const modal = document.getElementById('bid-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     };
 
     window.submitBid = function() {
@@ -662,6 +665,12 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .finally(() => hideSpinner());
     };
+
+    // Update the bid form submission
+    document.getElementById('bid-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitBid();
+    });
 
     // Update the bid button creation in loadAuctionItems
     function createBidButton(item) {

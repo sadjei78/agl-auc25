@@ -239,21 +239,19 @@
     <!-- Add this before the closing body tag -->
     <div id="bid-modal" class="modal" style="display: none;">
         <div class="modal-container">
-            <span class="close" onclick="closeBidModal()">&times;</span>
             <h2>Place Bid</h2>
-            <div class="bid-form">
-                <p id="bid-item-name"></p>
-                <p id="current-bid-info"></p>
-                <p id="minimum-bid-info"></p>
-                <div class="form-fields">
+            <div id="bid-item-name" class="modal-item-name"></div>
+            <div id="current-bid" class="modal-bid-info"></div>
+            <form id="bid-form">
+                <div class="form-group">
                     <label for="bid-amount">Your Bid Amount ($):</label>
-                    <input type="number" id="bid-amount" min="0" step="0.01" required>
+                    <input type="number" id="bid-amount" required min="0" step="1">
                 </div>
-                <div class="form-actions">
-                    <button onclick="submitBid()" class="submit-button">Place Bid</button>
-                    <button onclick="closeBidModal()" class="cancel-button">Cancel</button>
+                <div class="button-group">
+                    <button type="submit" class="primary-button">Submit Bid</button>
+                    <button type="button" onclick="closeModal()" class="secondary-button">Cancel</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
