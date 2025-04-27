@@ -290,7 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 params.append('email', loginEmail.value);
                 params.append('password', hashedPassword);
 
-                const response = await fetch(`${scriptURL}?${params}`);
+                const response = await fetch(`${scriptURL}?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
                 
             if (!response.ok) {
                     const errorText = await response.text();
@@ -359,7 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastName: lastName
             });
 
-            const response = await fetch(`${scriptURL}?${params.toString()}`);
+            const response = await fetch(`${scriptURL}?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                mode: 'cors'
+            });
                 const responseText = await response.text();
                 console.log('Server response:', responseText); // Debug log
                 
@@ -900,15 +912,22 @@ window.addCannedResponse = async function(itemId, itemName) {
             token: token
         });
 
-        const result = await fetch(`${scriptURL}?${params.toString()}`);
-        const data = await result.json();
+        const response = await fetch(`${scriptURL}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
+        });
 
-        if (data.success) {
+        const result = await response.json();
+
+        if (result.success) {
             responseInput.value = '';
             // Refresh the search results
             handleItemSearch();  // This will refresh the search results
         } else {
-            alert('Failed to add response: ' + (data.message || 'Unknown error'));
+            alert('Failed to add response: ' + (result.message || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error in addCannedResponse:', error);
@@ -1273,11 +1292,11 @@ async function submitItem(formData) {
         });
 
         const response = await fetch(`${scriptURL}?${params.toString()}`, {
-            method: 'GET',  // Using GET since POST might have CORS issues
+            method: 'GET',
             headers: {
                 'Accept': 'application/json'
             },
-            mode: 'cors'  // Add this line
+            mode: 'cors'
         });
 
         if (!response.ok) {
@@ -1357,7 +1376,14 @@ document.getElementById('bid-form')?.addEventListener('submit', async (e) => {
             bidAmount: bidAmount
         });
 
-        const response = await fetch(`${scriptURL}?${params.toString()}`);
+        const response = await fetch(`${scriptURL}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
+        });
+
         const result = await response.json();
         
         if (result.success) {
