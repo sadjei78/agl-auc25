@@ -298,28 +298,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-                let result;
-                try {
-                    result = await response.json();
-                } catch (jsonError) {
-                    const errorText = await response.text();
-                    console.error('Non-JSON response:', errorText);
-                    throw new Error('Invalid server response');
-                }
-
-            if (result.success) {
+                const result = await response.json();
+                
+                if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
-            } else {
+                } else {
                     loginError.textContent = result.error || 'Login failed';
                     loginError.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Login error:', error);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
                 loginError.textContent = 'An error occurred during login. Please try again.';
                 loginError.style.display = 'block';
-        } finally {
-            hideSpinner();
-        }
+            } finally {
+                hideSpinner();
+            }
     });
     }
 
