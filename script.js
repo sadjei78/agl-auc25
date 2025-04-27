@@ -318,12 +318,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const loginError = document.getElementById('login-error');
             
             try {
-                const response = await fetch(`${scriptURL}?action=login&email=${encodeURIComponent(loginEmail.value)}&password=${encodeURIComponent(loginPassword.value)}`);
+                // Hash the password before sending
+                const hashedPassword = await hashPassword(loginPassword.value);
                 
-                // Get the response text first
+                // Construct URL with proper parameters
+                const params = new URLSearchParams({
+                    action: 'login',
+                    email: loginEmail.value,
+                    password: hashedPassword  // Send hashed password instead
+                });
+
+                const response = await fetch(`${scriptURL}?${params.toString()}`);
                 const responseText = await response.text();
+                console.log('Server response:', responseText); // Debug log
                 
-                // Try to parse it as JSON
                 let result;
                 try {
                     result = JSON.parse(responseText);
@@ -1249,5 +1257,14 @@ async function submitItem(formData) {
     } finally {
         hideSpinner();
     }
+}
+
+// Add this function for password hashing
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
