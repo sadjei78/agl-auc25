@@ -1374,6 +1374,7 @@ function displayItemsInCategory(category, items) {
     itemsContainer.className = 'category-items';
 
     items.forEach(item => {
+        console.log('Processing item:', item);  // Add this line
         const itemElement = document.createElement('div');
         itemElement.className = `auction-item ${item.biddingActive ? '' : 'closed'}`;
         
