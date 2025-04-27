@@ -207,7 +207,7 @@ function initializeAdminTools() {
     }
 }
 
-// Update chat initialization in handleLoginSuccess
+// Update handleLoginSuccess function
 async function handleLoginSuccess(result, loginEmail) {
     try {
         // Store user data in localStorage
@@ -223,22 +223,28 @@ async function handleLoginSuccess(result, loginEmail) {
         document.getElementById('auction-items').style.display = 'block';
         document.getElementById('chat').style.display = 'block';
 
-        // Initialize chat first, before any other operations
+        // Initialize chat first
         await chat.initialize(loginEmail.value, result.adminType === 'admin');
 
         // Setup admin features if admin
         if (result.adminType === 'admin') {
             initializeAdminTools();
+            const adminBadge = document.getElementById('admin-badge');
+            if (adminBadge) adminBadge.style.display = 'flex';
         }
 
-        // Display admin badge
-        displayAdminBadge(result.adminType);
+        // Display welcome message
+        const welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.textContent = `Welcome, ${result.firstName}!`;
+            welcomeMessage.style.display = 'block';
+        }
 
-        // Show welcome page
-        displayWelcomePage();
-
+        // Load and display categorized items
+        await loadAuctionItems(); // This will group items by category and display them collapsed
     } catch (error) {
         console.error('Error in handleLoginSuccess:', error);
+        showErrorMessage('Error loading auction items. Please refresh the page.');
     }
 }
 
@@ -260,6 +266,38 @@ async function loadInitialCategories() {
     }
 }
 
+// Add document ready handler at the top level
+document.addEventListener('DOMContentLoaded', () => {
+    // Check session first
+    checkSessionAndLoadView();
+
+    // Setup login form handler
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            // ... existing login form handler code ...
+        });
+    }
+
+    // Setup registration link handler
+    const showRegistrationLink = document.getElementById('show-registration');
+    if (showRegistrationLink) {
+        showRegistrationLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('registration').style.display = 'block';
+        });
+    }
+
+    // Setup registration form handler
+    const registrationForm = document.getElementById('registration-form');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async (e) => {
+            // ... existing registration form handler code ...
+        });
+    }
+});
+
 // Update checkSessionAndLoadView function
 async function checkSessionAndLoadView() {
     const token = localStorage.getItem('sessionToken');
@@ -267,12 +305,17 @@ async function checkSessionAndLoadView() {
     const adminType = localStorage.getItem('adminType');
     const firstName = localStorage.getItem('firstName');
 
+    // Hide all sections first
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('registration').style.display = 'none';
+    document.getElementById('auction-items').style.display = 'none';
+    document.getElementById('chat').style.display = 'none';
+    document.getElementById('bidding').style.display = 'none';
+    document.getElementById('admin-badge').style.display = 'none';
+    document.getElementById('welcome-message').style.display = 'none';
+
     if (token && userEmail) {
         try {
-            // Hide login/registration first
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('registration').style.display = 'none';
-
             // Show main sections
             document.getElementById('auction-items').style.display = 'block';
             document.getElementById('chat').style.display = 'block';
@@ -296,23 +339,16 @@ async function checkSessionAndLoadView() {
             }
 
             // Load auction items
-            await loadInitialCategories();
+            await loadAuctionItems();
 
         } catch (error) {
             console.error('Error restoring session:', error);
-            // If something fails, reset to login state
             localStorage.clear();
             location.reload();
         }
     } else {
-        // No valid session, show login
+        // No valid session, show only login form
         document.getElementById('login').style.display = 'block';
-        document.getElementById('registration').style.display = 'none';
-        document.getElementById('auction-items').style.display = 'none';
-        document.getElementById('chat').style.display = 'none';
-        document.getElementById('bidding').style.display = 'none';
-        document.getElementById('admin-badge').style.display = 'none';
-        document.getElementById('welcome-message').style.display = 'none';
     }
 }
 
@@ -1164,7 +1200,7 @@ async function submitItem(formData) {
             closeAddItemModal();
             showErrorMessage('Item added successfully!', 'success');
             // Refresh items display
-            await loadInitialCategories();
+            await loadAuctionItems();
         } else {
             throw new Error(result.error || 'Failed to add item');
         }
@@ -1237,7 +1273,7 @@ document.getElementById('bid-form')?.addEventListener('submit', async (e) => {
         if (result.success) {
             showErrorMessage('Bid placed successfully!', 'success');
             closeBidModal();
-            await loadInitialCategories(); // Refresh items
+            await loadAuctionItems(); // Refresh items
         } else {
             throw new Error(result.error || 'Failed to place bid');
         }
