@@ -25,11 +25,20 @@ header {
     padding: 20px;
 }
 
+.category-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    justify-content: flex-start;
+}
+
 .auction-item {
+    flex: 0 0 250px; /* Fixed width, don't grow or shrink */
+    margin: 0; /* Remove margin since we're using gap */
     border: 1px solid #ccc;
     padding: 15px;
     text-align: center;
-    width: 250px;
     position: relative;
     padding-top: 40px;    /* Keep space for the status banner */
     display: flex;

@@ -419,17 +419,21 @@ class Chat {
         if (!email || !token) return;
 
         try {
-            // Use the correct endpoint for admin chat users
-            const response = await fetch(`${scriptURL}?action=getAdminChatUsers&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+            // Use getChatMessages instead of getAdminChatUsers
+            const response = await fetch(`${scriptURL}?action=getChatMessages&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
             const data = await response.json();
             
-            if (data.success && Array.isArray(data.users)) {
-                this.displayActiveUsers(data.users);
+            // Handle both possible response formats
+            const users = data.success ? (data.activeUsers || data.users || []) : [];
+            
+            if (Array.isArray(users)) {
+                this.displayActiveUsers(users);
             } else {
-                console.error('Invalid active users data:', data);
+                console.error('Invalid users data format:', data);
             }
         } catch (error) {
             console.error('Error loading active users:', error);
+            // Don't throw the error to prevent breaking the polling
         }
     }
 
