@@ -325,20 +325,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const params = new URLSearchParams({
                     action: 'login',
                     email: loginEmail.value,
-                    password: hashedPassword  // Send hashed password instead
-                });
+                    password: hashedPassword
+                }).toString();
 
-                const response = await fetch(`${scriptURL}?${params.toString()}`);
-                const responseText = await response.text();
-                console.log('Server response:', responseText); // Debug log
+                const response = await fetch(`${scriptURL}?${params}`);
                 
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('Server response:', responseText);
-                    throw new Error('Invalid server response');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
                 
                 if (result.success) {
                     await handleLoginSuccess(result, loginEmail);
@@ -349,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                loginError.textContent = 'An error occurred during login';
+                loginError.textContent = 'An error occurred during login. Please try again.';
                 loginError.style.display = 'block';
             } finally {
                 hideSpinner();
@@ -367,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Add registration form handler
+    // Update registration form handler
     const registrationForm = document.getElementById('registration-form');
     if (registrationForm) {
         registrationForm.addEventListener('submit', async (e) => {
@@ -375,17 +371,36 @@ document.addEventListener('DOMContentLoaded', () => {
             showSpinner();
             
             try {
-                const formData = new FormData(registrationForm);
-                // Hash the password before sending
-                const hashedPassword = await hashPassword(formData.get('password'));
-                formData.set('password', hashedPassword);
+                // Get form values
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const firstName = document.getElementById('reg-firstName').value;
+                const lastName = document.getElementById('reg-lastName').value;
                 
-                const response = await fetch(`${scriptURL}?action=register`, {
-                    method: 'POST',
-                    body: formData
+                // Hash the password
+                const hashedPassword = await hashPassword(password);
+                
+                // Construct URL parameters
+                const params = new URLSearchParams({
+                    action: 'register',
+                    email: email,
+                    password: hashedPassword,
+                    firstName: firstName,
+                    lastName: lastName
                 });
+
+                const response = await fetch(`${scriptURL}?${params.toString()}`);
+                const responseText = await response.text();
+                console.log('Server response:', responseText); // Debug log
                 
-                const result = await response.json();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Server response:', responseText);
+                    throw new Error('Invalid server response');
+                }
+                
                 if (result.success) {
                     document.getElementById('registration').style.display = 'none';
                     document.getElementById('login').style.display = 'block';
